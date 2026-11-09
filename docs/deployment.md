@@ -184,3 +184,16 @@ Deployment dpl_pkQZLSqG45QmnZCXXdAdSrQ36bW6. Lista de salas com vagas na página
 - Testes confirmam 3 + 7 = 9, 7 + 5 = 11, 7 + 7 vence, 9 + 5 vence; mão de 11 a partir de 0 chega a 11 e a partir de 3/5/7/9 vence.
 - Tentos manuais adiados a pedido do usuário; nenhuma opção manual publicada.
 - Validação: 68 testes de motor/API/segurança, tipagem e build; navegador em sessões independentes, celular e PC, consensos, capar, privacidade, bots e resultado. Verificação pública com Supabase: tema, espectador sem cartas, troca de lugar no lobby, saída e transferência do anfitrião.
+
+
+## Tutorial e modo personalizado — 2026-11-09
+- Production: https://truco-da-casa.vercel.app
+- Deployment: dpl_FwXka2pqMCzp7jXjLpsoXfzxYiPG (READY).
+- Tutorial: 16 capítulos, comparador de cartas abertas/encobertas, simuladores de tentos e empates, demonstração de mão, 12 casos guiados e 13 exercícios. Consulta em diálogo na sala sem enviar jogadas ou interromper os prazos.
+- Força, baralho, pontuação e resolução de mãos compartilhados entre motor e tutorial, preservando o comportamento existente.
+- /admin: login privado, fotos das 40 cartas, 11 eventos de áudio, prévias, nome/disponibilidade do modo e publicação de configurações para novas salas.
+- Modo personalizado separado do normal; escolha de tentos normais/manuais na criação. Arquivos privados no Supabase, acesso autorizado por sala e cópia imutável da configuração por sala.
+- Manual: puxar/devolver em qualquer fase, animação pública, mão de 11/capar pelo placar e encerramento somente com unanimidade dos jogadores. Comandos concorrentes protegidos por idempotência, CAS e identificador da partida.
+- Acesso administrativo inicial guardado somente no arquivo local ignorado .data/admin-access.txt; servidor publicado usa hash scrypt e sessão assinada. Variáveis privadas configuradas na Vercel; nenhum segredo enviado ao GitHub.
+- Validação: 75 testes de motor/API/segurança; tipagem e build; navegador no celular/PC para tutorial, som, modo normal, criação personalizada, upload e sigilo, snapshots, animação em sessões independentes e votação. Conferência pública passou para login, upload privado/Supabase, configuração persistida, sala manual com bot e unanimidade.
+- GitHub: Rodrigosx7/JogosOnline, main; tutorial 5f7a9da e personalizado 0fb3f1f. Publicação feita pela Vercel CLI.

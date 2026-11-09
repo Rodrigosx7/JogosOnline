@@ -54,3 +54,8 @@ Sem bots, chat, espectadores, apostas financeiras ou cadastro com senha. Cartas 
 A entrada **Dominó** na página inicial abre `/domino`. A modalidade inicial é 2x2, duplo-seis, sete pedras por participante, sem compra e vitória a partir de 100 pontos. Inclui salas por convite, salas abertas, treino/complemento com bots, chat e revanche.
 
 Regras e validação: `docs/domino.md`. O motor e as APIs são separados dos de truco; somente a sessão e o armazenamento privado são compartilhados.
+
+
+## Tutorial e modo personalizado
+
+Tutorial na página inicial e dentro da sala. Painel `/admin` para fotos e áudios; criação de sala personalizada com tentos normais ou manuais. Documentação: [modo personalizado](docs/modo-personalizado.md). Credenciais iniciais ficam somente no arquivo local ignorado `.data/admin-access.txt`.
