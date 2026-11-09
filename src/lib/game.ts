@@ -1,4 +1,6 @@
 import { randomInt, randomUUID } from 'node:crypto';
+import { BIDS, cardStrength, handWinner, makeDeck, scoreAfterWin } from './truco-rules';
+export { cardStrength, makeDeck } from './truco-rules';
 import { ELEVEN_NOTICE_MS } from './presentation';
 import { SIGNAL_DURATION_MS, SIGNAL_OPTIONS, type ChatMessage, type PartnerSignal } from './social';
 
@@ -38,10 +40,7 @@ export type Room = {
   botAcknowledgedSignals?: Record<string, string>;
   botPendingSignalAcks?: Record<string, { id: string; at: number }>;
 };
-const RANKS = ['4', '5', '6', '7', 'Q', 'J', 'K', 'A', '2', '3'];
-const SUITS = ['clubs', 'hearts', 'spades', 'diamonds'];
 const SUIT_NAMES: Record<string, string> = { clubs: 'paus', hearts: 'copas', spades: 'espadas', diamonds: 'ouros' };
-const BIDS = [3, 5, 7, 9, 11];
 const TURN = 30_000;
 const COLLECTION = 2_500;
 const ABSENCE = 90_000;
@@ -54,13 +53,6 @@ const atSeat = (r: Room, seat: number) => r.players.find(p => p.seat === seat)!;
 const decidingEleven = (r: Room) => !!r.eleven && r.eleven.teams.some(t => !r.eleven!.accepted.includes(t));
 function resolveDecision(r: Room, id?: string) { if (id) r.resolvedDecisions = [...(r.resolvedDecisions ?? []).filter(v => v !== id).slice(-7), id]; }
 
-export function cardStrength(card: Card): number {
-  const special = ['7-diamonds', 'A-spades', '7-hearts', '4-clubs'].indexOf(`${card.rank}-${card.suit}`);
-  return special >= 0 ? 20 + special : RANKS.indexOf(card.rank) + 1;
-}
-export function makeDeck(): Card[] {
-  return SUITS.flatMap(suit => RANKS.map(rank => ({ id: `${rank}-${suit}`, rank, suit })));
-}
 export function createRoom(code: string, mode: Mode): Room {
   if (mode !== '1x1' && mode !== '2x2') fail('Modalidade inválida.');
   return { code, mode, players: [], revision: 0, status: 'waiting', currentSeat: 0, dealer: 0,
@@ -95,30 +87,13 @@ function award(r: Room, winner: number | null, amount: number, now: number, reas
   log(r, reason);
   let matchWon = false;
   if (winner !== null) {
-    const previous = r.scores[winner];
-    const steps = [0, 3, 5, 7, 9, 11];
-    const current = steps.findLastIndex(score => score <= previous);
-    const advance = BIDS.indexOf(amount) + 1;
-    // The house has a specific jump for a truco won from five.
-    matchWon = current + advance >= steps.length;
-    r.scores[winner] = amount === 5 && previous === 5 ? 11 : steps[current + advance] ?? 11;
+    const result = scoreAfterWin(r.scores[winner], amount);
+    matchWon = result.victory; r.scores[winner] = result.score;
   }
   if (winner !== null && matchWon) {
     r.status = 'finished'; r.winner = winner; r.deadline = null; r.pending = null;
     log(r, `Equipe ${winner + 1} venceu a partida.`);
   } else startHand(r, now + (r.handNotice?.decision === 'run' && r.handNotice.at === now ? ELEVEN_NOTICE_MS : 0));
-}
-function handWinner(results: (number | null)[]): number | null | undefined {
-  const [a, b, c] = results;
-  if (results.length >= 2) {
-    if (a === null && b !== null) return b;
-    if (a !== null && (b === null || b === a)) return a;
-  }
-  if (results.length === 3) {
-    if (c !== null) return c;
-    return a ?? b ?? null;
-  }
-  return undefined;
 }
 function play(r: Room, p: Player, id: string, covered: boolean, now: number) {
   if (r.transition) fail('Aguarde o recolhimento das cartas.');

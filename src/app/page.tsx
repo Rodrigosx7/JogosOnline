@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { OpenRooms } from '../components/OpenRooms';
 import { DominoIcon } from '../components/DominoPieces';
-import { Rules } from '../components/Cards';
+import { TrucoTutorial } from '../components/TrucoTutorial';
 import './home.css';
 
 export default function Home() {
@@ -73,6 +73,7 @@ export default function Home() {
           <div className="landing-caption">
             <span>Sem download</span><i aria-hidden="true">·</i><span>Sem cadastro</span><i aria-hidden="true">·</i><span>Só chamar e jogar</span>
           </div>
+          <a className="landing-tutorial-link" href="#regras">Aprender a jogar</a>
         </div>
 
         <div className="landing-panel">
@@ -107,10 +108,7 @@ export default function Home() {
         <OpenRooms />
       </section>
 
-      <section id="regras" className="landing-rules" aria-labelledby="rules-title">
-        <div className="landing-rules-intro"><span aria-hidden="true">♠</span><div><h2 id="rules-title">Nosso combinado<br />antes da primeira carta.</h2><p>Truco de manilha fixa, com a pontuação da casa.</p></div></div>
-        <Rules />
-      </section>
+      <section id="regras" className="landing-rules" aria-label="Tutorial completo do Truco da Casa"><TrucoTutorial /></section>
       <footer className="landing-footer"><span>Truco da casa</span><p>A melhor parte é quem senta à mesa.</p><span>Feito para jogar junto.</span></footer>
     </main>
   );
