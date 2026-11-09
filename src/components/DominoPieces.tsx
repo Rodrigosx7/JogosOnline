@@ -1,0 +1,12 @@
+export function DominoIcon({ className = '' }: { className?: string }) {
+  return <svg className={className} viewBox="0 0 36 36" width="28" height="28" fill="none" aria-hidden="true"><g transform="rotate(-13 12 18)"><rect x="3" y="5" width="15" height="27" rx="3" fill="currentColor"/><path d="M5 18h11" stroke="#fff4da"/><g fill="#fff4da"><circle cx="8" cy="11" r="1.5"/><circle cx="13" cy="14" r="1.5"/><circle cx="10.5" cy="25" r="1.5"/></g></g><g transform="rotate(13 25 18)"><rect x="18" y="3" width="15" height="27" rx="3" fill="#fff6df" stroke="currentColor" strokeWidth="1.5"/><path d="M20 16h11" stroke="currentColor"/><g fill="currentColor"><circle cx="23" cy="9" r="1.5"/><circle cx="28" cy="12" r="1.5"/><circle cx="23" cy="22" r="1.5"/><circle cx="28" cy="25" r="1.5"/></g></g></svg>;
+}
+const dots: Record<number, number[]> = { 0: [], 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+export function DominoStone({ a, b, horizontal = false, back = false }: { a?: number; b?: number; horizontal?: boolean; back?: boolean }) {
+  return <span className={`domino-stone ${horizontal ? 'stone-horizontal' : ''} ${back ? 'stone-back' : ''}`} aria-label={back ? 'Pedra fechada' : `${a} e ${b}`}>
+    {back ? <span aria-hidden="true">✦</span> : [a ?? 0, b ?? 0].map((value, half) => <span className="stone-half" key={half} aria-hidden="true">{Array.from({ length: 9 }, (_, index) => <i key={index} className={dots[value]?.includes(index) ? 'pip-filled' : ''} />)}</span>)}
+  </span>;
+}
+export function DominoRules() {
+  return <div className="domino-rule-text"><p>Quatro pessoas, duas duplas em posições opostas. São 28 pedras, de 0–0 a 6–6, com sete para cada jogador e sem compra.</p><p>A primeira mão começa obrigatoriamente pelo 6–6. Nas seguintes, a saída avança um lugar e pode ser com qualquer pedra. As jogadas seguem a ordem dos assentos.</p><p>Encaixe uma pedra numa das duas pontas abertas. Só pode passar se não tiver encaixe. Quem jogar sua última pedra bate: sua dupla recebe a soma das pedras restantes dos adversários.</p><p>Após quatro passes seguidos, o jogo tranca. Vence a dupla com menor soma nas mãos e recebe a soma adversária. Se as somas empatarem, ninguém pontua. A primeira dupla a alcançar ou ultrapassar 100 vence.</p><p>São 30 segundos por jogada. O prazo esgotado joga uma pedra válida ou passa quando não houver encaixe. Desconexão contínua de 90 segundos causa derrota por abandono.</p></div>;
+}

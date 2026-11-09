@@ -1,0 +1,18 @@
+# Credenciais locais; versionar somente o exemplo vazio.
+.env
+.env.*
+!.env.example
+
+node_modules/
+.next/
+.data/
+*.tsbuildinfo
+playwright-report/
+test-results/
+
+.vercel/
+.vercel
+.env*
+!.env.example
+.next-qa/
+graphify-out/

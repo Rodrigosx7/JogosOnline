@@ -1,0 +1,90 @@
+import { test, expect } from '@playwright/test';
+import { FileRoomStore } from '../src/lib/server/storage';
+import type { Room } from '../src/lib/game';
+
+const origin = process.env.TRUCO_TEST_URL || 'http://localhost:3000';
+for (const mode of ['1x1', '2x2'] as const) test(`mesa ${mode}: mão próxima, tentos e truco persistente`, async ({ browser }) => {
+  test.skip(!origin.includes('localhost:3002'), 'Fixture visual isolada.');
+  const contexts = await Promise.all(Array.from({ length: mode === '1x1' ? 2 : 4 }, () => browser.newContext()));
+  try {
+    const created = await contexts[0].request.post(`${origin}/api/rooms`, { data: { mode, name: 'Amigo 0' } });
+    const { code } = await created.json(), endpoint = `${origin}/api/rooms/${code}`;
+    const view = async (i: number) => (await contexts[i].request.get(endpoint)).json();
+    async function command(i: number, command: any) {
+      const state = command.type === 'join' ? { revision: 0 } : await view(i);
+      const response = await contexts[i].request.post(endpoint, { data: { command, revision: state.revision, requestId: crypto.randomUUID() } });
+      expect(response.ok(), await response.text()).toBeTruthy();
+    }
+    for (let i = 1; i < contexts.length; i++) await command(i, { type: 'join', name: `Amigo ${i}` });
+    for (let i = 0; i < contexts.length; i++) await command(i, { type: 'ready' });
+    const identities = await Promise.all(contexts.map((_, i) => view(i)));
+    const store = new FileRoomStore(), stored = (await store.get<Room>(code))!;
+    stored.document.state.scores = [7, 5]; stored.document.state.revision++;
+    expect(await store.compareAndSwap(code, stored.version, stored.document)).toBeTruthy();
+    const pages = await Promise.all(contexts.map(c => c.newPage()));
+    await Promise.all(pages.map(p => p.goto(`${origin}/room/${code}`)));
+    await Promise.all(pages.map(p => expect(p.getByTestId('dealing-animation')).toBeHidden({ timeout: 10000 })));
+    const page = pages[0];
+    await expect(page.getByTestId('tento-pile').filter({ has: page.locator('[data-testid="tento-seed"]') })).toHaveCount(2);
+    await expect(page.locator('[data-team="0"] [data-testid="tento-seed"]')).toHaveCount(7);
+    await expect(page.locator('[data-team="1"] [data-testid="tento-seed"]')).toHaveCount(5);
+    await expect(page.getByTestId('hand-card')).toHaveCount(3);
+    const felt = (await page.locator('.felt-table').boundingBox())!, hand = (await page.locator('.hand-cards').boundingBox())!;
+    const turn = (await page.getByRole('group', { name: 'Placar e vez', exact: true }).boundingBox())!;
+    expect(Math.abs(turn.x + turn.width / 2 - felt.x - felt.width / 2)).toBeLessThan(2);
+    expect(turn.y + turn.height).toBeLessThanOrEqual(felt.y);
+    await expect(page.locator('.game-sidebar .turn-time')).toHaveCount(0);
+    await expect(page.locator('.game-sidebar .score-panel')).toHaveCount(0);
+    await expect(page.locator('.table-hud .score-panel')).toHaveCount(1);
+    expect(hand.y).toBeLessThan(felt.y + felt.height);
+    expect(hand.y + hand.height).toBeGreaterThan(felt.y + felt.height);
+    await expect(page.locator('.holding-hand')).toHaveCount(0);
+    await expect(page.locator('.table-round')).toHaveCount(0);
+    await page.screenshot({ path: `test-results/table-held-${mode}.png`, fullPage: true });
+    const state = await view(0), asker = identities.findIndex(v => v.players.find((p: any) => p.id === v.playerId).seat === state.currentSeat);
+    const bid = (await pages[asker].locator('.hand-truco').boundingBox())!;
+    const fan = await pages[asker].getByTestId('hand-card').evaluateAll(cards => cards.map(card => card.getBoundingClientRect().right));
+    expect(bid.x).toBeGreaterThanOrEqual(Math.max(...fan));
+    await pages[asker].getByRole('button', { name: /Pedir truco/ }).click();
+    const responder = identities.findIndex(v => v.players.find((p: any) => p.id === v.playerId).seat % 2 !== state.currentSeat % 2);
+    const prompt = pages[responder].getByRole('alertdialog');
+    await expect(prompt).toBeVisible();
+    await expect(pages[responder].locator('.felt-table [role="alertdialog"]')).toHaveCount(0);
+    await expect(pages[responder].locator('.your-hand [role="alertdialog"]')).toHaveCount(1);
+    await expect(prompt).toContainText(`Amigo ${asker} trucou!`);
+    await pages[responder].waitForTimeout(1800);
+    await expect(prompt).toBeVisible();
+    await pages[responder].setViewportSize({ width: 390, height: 844 });
+    await expect(prompt.getByRole('button', { name: 'Aceitar 5', exact: true })).toBeVisible();
+    const responses = (await prompt.boundingBox())!;
+    const actions = await prompt.locator('.hand-truco-responses .button').evaluateAll(buttons => buttons.map(button => { const box = button.getBoundingClientRect(); return { x: box.x, y: box.y }; }));
+    expect(actions).toHaveLength(3);
+    expect(Math.max(...actions.map(b => b.y)) - Math.min(...actions.map(b => b.y))).toBeLessThan(1);
+    expect(actions[0].x).toBeLessThan(actions[1].x);
+    expect(actions[1].x).toBeLessThan(actions[2].x);
+    expect(responses.x + responses.width).toBeLessThanOrEqual(390);
+    expect(await pages[responder].evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+    await pages[responder].screenshot({ path: `test-results/table-truco-mobile-${mode}.png`, fullPage: true });
+    await prompt.getByRole('button', { name: 'Aumentar para seis' }).click();
+    const counter = pages[asker].getByRole('alertdialog');
+    await expect(counter).toContainText(`Amigo ${responder} aumentou!`);
+    await counter.getByRole('button', { name: 'Aceitar 7', exact: true }).click();
+    await expect(counter).toBeHidden();
+    await expect(pages[responder].getByRole('alertdialog')).toBeHidden();
+    await expect.poll(async () => (await view(0)).stake).toBe(7);
+    await pages[asker].setViewportSize({ width: 390, height: 844 });
+    await expect(pages[asker].locator('.hand-truco')).toBeVisible();
+    const mobileBid = (await pages[asker].locator('.hand-truco').boundingBox())!;
+    const mobileFan = await pages[asker].getByTestId('hand-card').evaluateAll(cards => cards.map(card => card.getBoundingClientRect().right));
+    expect(mobileBid.x).toBeGreaterThanOrEqual(Math.max(...mobileFan));
+    expect(mobileBid.x + mobileBid.width).toBeLessThanOrEqual(390);
+    await pages[asker].evaluate(() => window.scrollTo(0, 0));
+    if (mode === '2x2') {
+      const signals = (await pages[asker].getByRole('group', { name: 'Sinais da mesa' }).boundingBox())!;
+      expect(signals.y + signals.height).toBeLessThanOrEqual(844);
+      await expect(pages[asker].locator('.your-hand .hand-signals button')).toHaveCount(7);
+    }
+    await pages[asker].screenshot({ path: `test-results/truco-beside-cards-${mode}.png`, fullPage: true });
+    await pages[responder].screenshot({ path: `test-results/table-held-mobile-${mode}.png`, fullPage: true });
+  } finally { await Promise.all(contexts.map(c => c.close())); }
+});

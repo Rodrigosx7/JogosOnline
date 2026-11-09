@@ -1,0 +1,15 @@
+node_modules
+.next
+.data
+.env
+.env.*
+.git
+graphify-out
+test-results
+playwright-report
+docs
+supabase
+tests
+*.tsbuildinfo
+
+.next-qa
