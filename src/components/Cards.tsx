@@ -1,10 +1,16 @@
+'use client';
+import {createContext,useContext,type ReactNode} from 'react';
 export type Card = { id: string; rank: string; suit: 'clubs' | 'hearts' | 'spades' | 'diamonds' };
+const CustomCards=createContext<{cards:Record<string,string>;base:string}>({cards:{},base:''});
+export function CustomCardsProvider({cards,base,children}:{cards:Record<string,string>;base:string;children:ReactNode}){return <CustomCards.Provider value={{cards,base}}>{children}</CustomCards.Provider>;}
 export const suits = { clubs: '♣', hearts: '♥', spades: '♠', diamonds: '♦' };
 const suitNames = { clubs: 'paus', hearts: 'copas', spades: 'espadas', diamonds: 'ouros' };
-export function PlayingCard({ card, back = false, small = false }: { card?: Card; back?: boolean; small?: boolean }) {
+export function PlayingCard({ card, back = false, small = false, artUrl }: { card?: Card; back?: boolean; small?: boolean; artUrl?:string }) {
+  const custom=useContext(CustomCards);
   if (back || !card) return <span className={`playing-card card-back ${small ? 'small' : ''}`} aria-label="Carta fechada"><span>♣</span></span>;
   const red = card.suit === 'hearts' || card.suit === 'diamonds';
-  return <span className={`playing-card ${red ? 'red' : ''} ${small ? 'small' : ''}`} aria-label={`${card.rank} de ${suitNames[card.suit]}`}><span className="card-corner">{card.rank}<span>{suits[card.suit]}</span></span><span className="card-suit" aria-hidden="true">{suits[card.suit]}</span><span className="card-corner bottom" aria-hidden="true">{card.rank}<span>{suits[card.suit]}</span></span></span>;
+  const art=artUrl??(custom.cards[card.id]?`${custom.base}/${custom.cards[card.id]}`:null);
+  return <span className={`playing-card ${red ? 'red' : ''} ${small ? 'small' : ''} ${art?'custom-card-art':''}`} aria-label={`${card.rank} de ${suitNames[card.suit]}`}><span className="card-corner">{card.rank}<span>{suits[card.suit]}</span></span>{art?<img className="card-photo" src={art} alt="" draggable={false} />:<span className="card-suit" aria-hidden="true">{suits[card.suit]}</span>}<span className="card-corner bottom" aria-hidden="true">{card.rank}<span>{suits[card.suit]}</span></span></span>;
 }
 export function BrandMark() {
   return <svg className="brand-mark" viewBox="0 0 120 120" aria-hidden="true" focusable="false"><circle cx="60" cy="60" r="58" fill="#651e2e" /><circle cx="60" cy="60" r="53" fill="none" stroke="#f5efdf" strokeOpacity=".35" strokeWidth="1.5" /><ellipse cx="60" cy="102" rx="27" ry="3.6" fill="none" stroke="#cfaf6e" strokeOpacity=".7" strokeWidth="1.8" /><path d="M34 36 L86 36 L79 92 Q78.5 98 72 98 L48 98 Q41.5 98 41 92 Z" fill="#f5efdf" fillOpacity=".12" stroke="#f5efdf" strokeWidth="3.2" strokeLinejoin="round" /><path d="M37.5 52 L82.5 52 L77.5 91 Q77 94.5 73 94.5 L47 94.5 Q43 94.5 42.5 91 Z" fill="#eaa42a" /><g fill="#651e2e" transform="translate(47 61) scale(.26)"><circle cx="50" cy="30" r="22" /><circle cx="28" cy="62" r="22" /><circle cx="72" cy="62" r="22" /><circle cx="50" cy="52" r="16" /><path d="M44 70 Q46 88 36 98 L64 98 Q54 88 56 70 Z" /></g><path d="M33 52 Q27 44 35 39 Q33 28 46 29 Q50 20 62 26 Q72 19 80 29 Q92 30 86 40 Q93 46 87 52 Z" fill="#fff6dc" /><path d="M40 58 L43 88" stroke="#fff6dc" strokeOpacity=".55" strokeWidth="2.4" strokeLinecap="round" /></svg>;

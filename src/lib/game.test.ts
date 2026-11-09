@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRoom, applyCommand, reconcile, playerView, makeDeck, cardStrength, type Room, type Card } from './game';
+import {defaultCustomConfig} from './custom-mode';
 
 const card = (rank: string, suit = 'diamonds'): Card => ({ id: `${rank}-${suit}`, rank, suit });
 function start(mode: '1x1' | '2x2' = '1x1'): Room {
@@ -559,4 +560,36 @@ test('spectators have no private cards, seats and kicks require lobby, host tran
   r=applyCommand(r,'viewer2',{type:'leave'},2);assert.equal(r.spectators!.length,0);
   let lobby=createRoom('host-transfer','1x1');lobby=applyCommand(lobby,'a',{type:'join',name:'Ana'},0);lobby=applyCommand(lobby,'b',{type:'join',name:'Bia'},0);
   lobby=applyCommand(lobby,'a',{type:'leave'},0);assert.equal(lobby.hostId,'b');
+});
+
+test('manual custom scores can be pulled during any phase, preserve totals, never end on a hand win and require every player vote',()=>{
+  let r=start();r.custom={config:defaultCustomConfig(),scoreMode:'manual'};
+  r=applyCommand(r,'p0',{type:'pull',amount:11},100);r=applyCommand(r,'p0',{type:'pull',amount:5},1200);
+  assert.deepEqual(r.scores,[16,0]);assert.equal(reconcile(r,1201).scores[0],16);assert.equal(r.status,'playing');
+  assert.throws(()=>applyCommand(r,'p0',{type:'pull',amount:1},1300));
+  r=applyCommand(r,'p0',{type:'pull',amount:-5},2300);assert.equal(r.scores[0],11);
+  r=applyCommand(r,'p1',{type:'pull',amount:3},2400);assert.deepEqual(r.scores,[11,3]);
+  r.currentSeat=0;r.stake=11;r=winHand(r);
+  assert.deepEqual(r.scores,[11,3]);assert.equal(r.status,'playing');assert.equal(r.eleven!.teams[0],0);
+  r=applyCommand(r,'p1',{type:'cap'},3000);assert.equal(r.stake,5);assert.equal(r.eleven!.forced,true);
+  const before=r.revision;r=applyCommand(r,'p0',{type:'finish-vote'},3100);assert.equal(r.status,'playing');assert.deepEqual(r.finishVotes,['p0']);
+  r=applyCommand(r,'p0',{type:'finish-vote'},3200);assert.deepEqual(r.finishVotes,[]);
+  r=applyCommand(r,'p0',{type:'finish-vote'},3300);r=applyCommand(r,'p1',{type:'finish-vote'},3400);assert.equal(r.status,'finished');assert.equal(r.winner,0);assert.ok(r.revision>before);
+});
+
+test('manual scores only affect own team; normal rooms and spectators cannot pull or vote',()=>{
+  const regular=start('2x2');assert.throws(()=>applyCommand(regular,'p0',{type:'pull',amount:3},100));assert.throws(()=>applyCommand(regular,'p0',{type:'finish-vote'},100));
+  let r=structuredClone(regular);r.custom={config:defaultCustomConfig(),scoreMode:'manual'};
+  r=applyCommand(r,'p2',{type:'pull',amount:7,team:1},100);assert.deepEqual(r.scores,[7,0]);
+  for(const amount of [0,12,-8,1.5,'3'])assert.throws(()=>applyCommand(r,'p0',{type:'pull',amount},2000));
+  r=applyCommand(r,'viewer',{type:'watch',name:'Visitante'},1000);assert.throws(()=>applyCommand(r,'viewer',{type:'pull',amount:3},2000));assert.throws(()=>applyCommand(r,'viewer',{type:'finish-vote'},2000));
+  r.transition={until:6000,winner:0,nextSeat:0};r.pending={team:1,proposed:5,resumeSeat:0};
+  r=applyCommand(r,'p0',{type:'pull',amount:1},2000);assert.equal(r.scores[0],8);assert.equal(r.transition!.until,6000);assert.ok(r.pending);
+});
+
+test('manual custom mode keeps eleven-eleven and illegal truco from ending before unanimous consent',()=>{
+  let r=start();r.custom={config:defaultCustomConfig(),scoreMode:'manual'};r.scores=[11,11];r.currentSeat=0;
+  r=applyCommand(r,'p0',{type:'raise'},100);assert.equal(r.status,'playing');assert.deepEqual(r.scores,[11,11]);assert.equal(r.eleven!.forced,true);
+  r.currentSeat=0;r=winHand(r);assert.equal(r.status,'playing');assert.deepEqual(r.scores,[11,11]);
+  r=applyCommand(r,'p0',{type:'finish-vote'},1000);r=applyCommand(r,'p1',{type:'finish-vote'},1000);assert.equal(r.status,'finished');assert.equal(r.winner,null);
 });

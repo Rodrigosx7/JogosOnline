@@ -257,3 +257,5 @@
 /* The room theme is fixed for everyone when its host creates the table. */
 .table-theme-picker .theme-swatch{display:grid;place-items:center;width:62px;height:27px;margin:0 auto 4px;border-radius:10px;box-shadow:inset 0 0 0 2px #b58c46;font-family:Arial,sans-serif;font-size:15px;font-weight:900;font-style:italic}
 .theme-swatch.theme-classic{background:#17472f}.theme-swatch.theme-skol{background:#f5d02d;color:#d71f2b}
+
+.landing .variant-picker button>span{font-size:16px;letter-spacing:0}.landing .variant-picker button>small{font-size:10px;line-height:1.5}

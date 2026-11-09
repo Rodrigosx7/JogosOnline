@@ -168,3 +168,19 @@ test('normal run response tokens are idempotent; cap wins concurrent pending ele
   const late=await accessRoom(code,'p2',{command:{type:'eleven',answer:'run',decisionId},revision,requestId:'cap-late-run-001'},store);
   assert.equal(late.status,200);assert.equal(late.view.eleven.deciding,false);assert.equal(late.view.stake,5);assert.deepEqual(late.view.scores,[11,3]);
 }));
+
+test('manual pulls and end votes merge concurrent revisions and reject commands from a prior match',()=>fixture(async store=>{
+  const {code}=await newRoom('a',{mode:'1x1',name:'Ana',variant:'custom',scoreMode:'manual'},store);let index=0;
+  async function send(id:string,command:any){const current=await accessRoom(code,id,undefined,store).catch(()=>({view:{revision:0}}));return accessRoom(code,id,{command,revision:current.view.revision,requestId:`manual-sequence-${++index}`},store);}
+  await send('b',{type:'join',name:'Bia'});await send('a',{type:'ready'});await send('b',{type:'ready'});
+  let state=(await accessRoom(code,'a',undefined,store)).view;
+  const matchId=state.matchId,revision=state.revision;
+  const pulled=await Promise.all(['a','b'].map((id,i)=>accessRoom(code,id,{command:{type:'pull',amount:3,matchId},revision,requestId:`concurrent-pull-${i}`},store)));
+  assert.deepEqual(pulled.map(x=>x.status),[200,200]);assert.deepEqual((await accessRoom(code,'a',undefined,store)).view.scores,[3,3]);
+  state=(await accessRoom(code,'a',undefined,store)).view;
+  const ended=await Promise.all(['a','b'].map((id,i)=>accessRoom(code,id,{command:{type:'finish-vote',vote:true,matchId},revision:state.revision,requestId:`concurrent-end-${i}`},store)));
+  assert.deepEqual(ended.map(x=>x.status),[200,200]);assert.equal((await accessRoom(code,'a',undefined,store)).view.status,'finished');
+  await send('a',{type:'rematch'});await send('b',{type:'rematch'});
+  const next=(await accessRoom(code,'a',undefined,store)).view;assert.notEqual(next.matchId,matchId);
+  const stale=await accessRoom(code,'a',{command:{type:'pull',amount:11,matchId},revision:next.revision,requestId:'prior-match-pull'},store);assert.equal(stale.status,409);assert.deepEqual(stale.view.scores,[0,0]);
+}));

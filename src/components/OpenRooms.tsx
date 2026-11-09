@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-type OpenRoom = { code: string; mode: '1x1' | '2x2'; host: string; players: number; capacity: number };
+type OpenRoom = { code: string; mode: '1x1' | '2x2'; host: string; players: number; capacity: number;customName?:string;scoreMode?:string };
 
 export function OpenRooms() {
   const [rooms, setRooms] = useState<OpenRoom[]>([]);
@@ -59,7 +59,7 @@ export function OpenRooms() {
                 <span>{room.host.trim().slice(0, 1).toLocaleUpperCase('pt-BR')}</span>
                 <span>{room.players > 1 ? `+${room.players - 1}` : '♣'}</span>
               </div>
-              <div className="landing-room-info"><h3>Mesa de {room.host}</h3><p>{room.players} de {room.capacity} jogadores <span>· {room.mode === '2x2' ? 'Em duplas' : 'Cara a cara'}</span></p></div>
+              <div className="landing-room-info"><h3>Mesa de {room.host}</h3><p>{room.players} de {room.capacity} jogadores <span>· {room.mode === '2x2' ? 'Em duplas' : 'Cara a cara'}</span></p>{room.customName&&<p>{room.customName} · {room.scoreMode==='manual'?'Tentos manuais':'Tentos normais'}</p>}</div>
               <a href={`/room/${room.code}`}>Entrar <span aria-hidden="true">→</span></a>
             </li>
           ))}

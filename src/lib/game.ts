@@ -1,5 +1,6 @@
 import { randomInt, randomUUID } from 'node:crypto';
 import { BIDS, cardStrength, handWinner, makeDeck, scoreAfterWin } from './truco-rules';
+import type { CustomConfig } from './custom-mode';
 export { cardStrength, makeDeck } from './truco-rules';
 import { ELEVEN_NOTICE_MS } from './presentation';
 import { SIGNAL_DURATION_MS, SIGNAL_OPTIONS, type ChatMessage, type PartnerSignal } from './social';
@@ -16,6 +17,10 @@ export type Room = {
   spectators?: { id: string; name: string; lastSeen: number }[];
   removedIds?: string[];
   runRequest?: { id: string; team: number; by: string; resumeSeat: number } | null;
+  custom?: { config: CustomConfig; scoreMode: 'normal' | 'manual' };
+  finishVotes?: string[];
+  matchId?:string;
+  pullEvents?: { id: string; playerId: string; name: string; team: number; amount: number; before: number; after: number; at: number }[];
   previousHandResults?: { number: number; results: (number | null)[] } | null;
   handNotice?: { kind?: 'eleven' | 'truco'; proposed?: number; id: string; team: number; decision: 'run' | 'play'; name: string; at: number } | null;
   trucoPenalty?: { playerId: string; name: string; team: number } | null;
@@ -55,7 +60,7 @@ function resolveDecision(r: Room, id?: string) { if (id) r.resolvedDecisions = [
 
 export function createRoom(code: string, mode: Mode): Room {
   if (mode !== '1x1' && mode !== '2x2') fail('Modalidade inválida.');
-  return { code, mode, players: [], revision: 0, status: 'waiting', currentSeat: 0, dealer: 0,
+  return { code, mode, players: [], revision: 0, matchId:randomUUID(),status: 'waiting', currentSeat: 0, dealer: 0,
     stake: 3, pending: null, deadline: null, scores: [0, 0], handNumber: 0, trickNumber: 1,
     trick: [], trickResults: [], history: [], winner: null, hands: {}, rematchVotes: [], lastRaiser: null,
     transition: null, handStartedAt: 0, completedTricks: [] };
@@ -85,6 +90,7 @@ function startHand(r: Room, now: number, advanceDealer = false) {
 function award(r: Room, winner: number | null, amount: number, now: number, reason: string) {
   resolveDecision(r, r.pending?.id); resolveDecision(r, r.eleven?.id);
   log(r, reason);
+  if (r.custom?.scoreMode === 'manual') { startHand(r, now + (r.handNotice?.decision === 'run' && r.handNotice.at === now ? ELEVEN_NOTICE_MS : 0)); return; }
   let matchWon = false;
   if (winner !== null) {
     const result = scoreAfterWin(r.scores[winner], amount);
@@ -132,6 +138,7 @@ function recordTeamDecision(r: Room, p: Player, kind: 'truco' | 'eleven' | 'run'
 function raise(r: Room, p: Player, now: number) {
   r.handNotice = null;
   if (r.scores[team(p.seat)] === 11) {
+    if(r.custom?.scoreMode === 'manual') { award(r,1-team(p.seat),5,now,`${p.name} trucou de 11. A outra equipe levou a mão; os tentos são puxados manualmente.`); return; }
     r.trucoPenalty = { playerId: p.id, name: p.name, team: team(p.seat) };
     r.status = 'finished'; r.winner = 1 - team(p.seat); r.deadline = null; r.pending = null; r.botAction = null;
     log(r, `${p.name} pediu truco na mão de 11 e perdeu a partida. Equipe ${r.winner + 1} venceu.`);
@@ -190,6 +197,23 @@ export function applyCommand(room: Room, playerId: string, command: any, now: nu
   } else {
     if (!p && spectator && command.type === 'chat') p = { ...spectator, seat: -1, ready: false };
     if (!p) fail('Entre na sala primeiro.');
+    if(command.type === 'pull' || command.type === 'finish-vote') {
+      if(r.custom?.scoreMode !== 'manual' || r.status !== 'playing') fail('Disponível somente durante partidas personalizadas com tentos manuais.');
+      if(command.type === 'pull') {
+        const amount=command.amount,ownTeam=team(p.seat),before=r.scores[ownTeam];
+        if(!Number.isInteger(amount)||amount===0||Math.abs(amount)>11||before+amount<0||before+amount>99)fail('Puxe ou devolva de 1 a 11 tentos. O placar vai de 0 a 99.');
+        if(r.pullEvents?.some(e=>e.playerId===p!.id&&now-e.at<1000))fail('Aguarde a mão terminar de puxar antes de repetir.');
+        r.scores[ownTeam]+=amount;
+        r.pullEvents=[...(r.pullEvents??[]).filter(e=>now-e.at<5000).slice(-7),{id:randomUUID(),playerId:p.id,name:p.name,team:ownTeam,amount,before,after:r.scores[ownTeam],at:now}];
+        log(r,`${p.name} ${amount>0?'puxou':'devolveu'} ${Math.abs(amount)} tento(s).`);
+      } else {
+        const votes=r.finishVotes??=[];
+        const wantsVote=typeof command.vote==='boolean'?command.vote:!votes.includes(p.id);
+        r.finishVotes=wantsVote?[...new Set([...votes,p.id])]:votes.filter(id=>id!==p!.id);
+        if(r.players.every(player=>r.finishVotes!.includes(player.id))) {r.status='finished';r.winner=r.scores[0]===r.scores[1]?null:r.scores[0]>r.scores[1]?0:1;r.deadline=null;r.pending=null;r.runRequest=null;r.transition=null;log(r,'Todos concordaram: partida encerrada.');}
+      }
+      r.revision++;return r;
+    }
     if (command.type === 'chat' || command.type === 'signal') {
       if (command.type === 'chat') {
         if (typeof command.text !== 'string' || command.text.length > 240) fail('Escreva uma mensagem de até 240 caracteres.');
@@ -236,6 +260,7 @@ export function applyCommand(room: Room, playerId: string, command: any, now: nu
       if (r.rematchVotes.length === size(r)) {
         r.status = 'playing'; r.scores = [0, 0]; r.winner = null; r.handNumber = 0; r.history = [];
         r.rematchVotes = []; r.players.forEach(v => v.lastSeen = now); startHand(r, now, true);
+        r.finishVotes=[];r.pullEvents=[];r.matchId=randomUUID();
       }
     } else {
       if (r.status !== 'playing') fail('A partida não está em andamento.');
@@ -322,14 +347,14 @@ export function reconcile(room: Room, now: number): Room {
   const r = clone(room);
   const steps = [0, 3, 5, 7, 9, 11];
   const scores = r.scores.map(value => steps.findLast(score => score <= value) ?? 0);
-  if (scores.some((score, i) => score !== r.scores[i])) { r.scores = scores; r.revision++; }
+  if (r.custom?.scoreMode !== 'manual' && scores.some((score, i) => score !== r.scores[i])) { r.scores = scores; r.revision++; }
   // Upgrade ongoing rooms created before mandatory 11–11 play was introduced.
-  if (r.status === 'playing' && r.scores.every(score => score === 11) && !r.eleven?.forced) {
+  if (r.status === 'playing' && r.custom?.scoreMode !== 'manual' && r.scores.every(score => score === 11) && !r.eleven?.forced) {
     r.eleven = { teams: [0, 1], accepted: [0, 1], forced: true }; r.stake = 5; r.pending = null;
     log(r, '11 a 11: os dois lados são obrigados a jogar por 5 tentos, sem correr.'); r.revision++;
   }
   while (r.status === 'playing') {
-    const absentAt = Math.min(...r.players.filter(p => !p.isBot).map(p => p.lastSeen + ABSENCE));
+    const absentAt = r.custom?.scoreMode === 'manual' ? Infinity : Math.min(...r.players.filter(p => !p.isBot).map(p => p.lastSeen + ABSENCE));
     const eventAt = Math.min(absentAt, r.transition?.until ?? r.deadline ?? Infinity);
     if (eventAt > now) break;
     if (absentAt === eventAt) {
@@ -367,6 +392,7 @@ export function playerView(room: Room, playerId: string, now: number): any {
   const watching = !!r.spectators?.some(v => v.id === playerId);
   return clone({ playerId, code: r.code, mode: r.mode, revision: r.revision, status: r.status,
     hostId: r.hostId ?? r.players[0]?.id, tableTheme: r.tableTheme ?? 'classic', isSpectator: watching,
+    custom:r.custom??null,matchId:r.matchId??null,finishVotes:r.finishVotes??[],pullEvents:(r.pullEvents??[]).filter(e=>now-e.at<4000),
     spectators: (r.spectators ?? []).map(({ id, name }) => ({ id, name })),
     runRequest: r.runRequest ?? null,
     players: r.players.map(({ id, name, seat, ready, isBot }) => ({ id, name, seat, ready, isBot: !!isBot, cardCount: r.hands[id]?.length ?? 0 })),

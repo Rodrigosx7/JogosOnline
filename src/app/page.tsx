@@ -12,6 +12,7 @@ export default function Home() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [mode, setMode] = useState('1x1');
+  const [variant,setVariant]=useState('normal'),[scoreMode,setScoreMode]=useState('normal');
   const [code, setCode] = useState('');
   const [tableTheme, setTableTheme] = useState('classic');
   const [listed, setListed] = useState(true);
@@ -26,7 +27,7 @@ export default function Home() {
       const response = await fetch('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), mode, tableTheme, practice, listed: listed && !practice }),
+        body: JSON.stringify({ name: name.trim(), mode, variant, scoreMode:variant==='custom'?scoreMode:'normal', tableTheme, practice, listed: listed && !practice }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Não foi possível abrir a mesa. Tente novamente.');
@@ -84,7 +85,7 @@ export default function Home() {
               <p className="landing-form-description">Você cria. Seus amigos chegam pelo convite.</p>
               <label htmlFor="nickname">Como te chamam?</label>
               <input id="nickname" placeholder="Seu apelido" value={name} onChange={e => setName(e.target.value)} minLength={2} maxLength={24} required autoComplete="nickname" />
-              <fieldset className="landing-modes">
+              <fieldset className="landing-modes variant-picker"><legend>Qual modo vamos jogar?</legend><div><button type="button" aria-pressed={variant==='normal'} onClick={()=>setVariant('normal')}><span>Normal</span><small>Regras da casa</small></button><button type="button" aria-pressed={variant==='custom'} onClick={()=>setVariant('custom')}><span>Personalizado</span><small>Fotos e áudios da turma</small></button></div></fieldset>{variant==='custom'&&<fieldset className="landing-modes variant-picker"><legend>Como puxar os tentos?</legend><div><button type="button" aria-pressed={scoreMode==='normal'} onClick={()=>setScoreMode('normal')}><span>Tentos normais</span><small>Placar automático</small></button><button type="button" aria-pressed={scoreMode==='manual'} onClick={()=>setScoreMode('manual')}><span>Tentos manuais</span><small>Placar livre; todos votam para encerrar</small></button></div></fieldset>}<fieldset className="landing-modes">
                 <legend>Qual é a formação?</legend>
                 <div>
                   <button type="button" aria-pressed={mode === '1x1'} onClick={() => setMode('1x1')}><span>1 × 1</span><small>Cara a cara</small></button>
@@ -109,7 +110,7 @@ export default function Home() {
       </section>
 
       <section id="regras" className="landing-rules" aria-label="Tutorial completo do Truco da Casa"><TrucoTutorial /></section>
-      <footer className="landing-footer"><span>Truco da casa</span><p>A melhor parte é quem senta à mesa.</p><span>Feito para jogar junto.</span></footer>
+      <footer className="landing-footer"><span>Truco da casa</span><p>A melhor parte é quem senta à mesa.</p><a href="/admin">Administração</a></footer>
     </main>
   );
 }

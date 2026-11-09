@@ -29,6 +29,9 @@ export function chooseBotCommand(view: ReturnType<typeof playerView>) {
 export function advanceBot(room: Room, now: number): Room {
   const bots = room.players.filter(p => p.isBot).sort((a, b) => a.seat - b.seat);
   if (!bots.length) return room;
+  if(room.status==='playing' && room.custom?.scoreMode==='manual' && room.finishVotes?.some(id=>room.players.some(p=>p.id===id&&!p.isBot))) {
+    for(const bot of bots)if(room.status==='playing'&&!room.finishVotes?.includes(bot.id))room=applyCommand(room,bot.id,{type:'finish-vote'},now);
+  }
   if ((room.status === 'finished' || room.status === 'cancelled') && room.rematchVotes.some(id => room.players.some(p => p.id === id && !p.isBot))) {
     for (const bot of bots) if (!room.rematchVotes.includes(bot.id)) room = applyCommand(room, bot.id, { type: 'rematch' }, now);
   }
