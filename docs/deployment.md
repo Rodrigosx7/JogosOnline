@@ -205,3 +205,11 @@ Deployment dpl_pkQZLSqG45QmnZCXXdAdSrQ36bW6. Lista de salas com vagas na página
 - Hash scrypt persistido em objeto privado do Supabase; a versão da sessão muda para invalidar sessões antigas, mantendo renovada somente a que fez a alteração. Login inicial por ambiente preservado até a primeira troca.
 - Verificação: 76 testes de motor/API/segurança, tipagem/build e teste de navegador local alterando/restaurando a senha, rejeitando a antiga e revogando outra sessão. Conferência publicada confirmou login atual e formulário; nenhuma senha de produção foi alterada durante a verificação.
 - Código: 4729ad9, enviado ao GitHub.
+
+## Sinuca Bola 8 — 2026-11-10
+- Produção: https://truco-da-casa.vercel.app/sinuca; deployment dpl_DdD1DeYfJ5Z2sGbMyfiFvrSjkUzV, READY.
+- Código 0e425b5 enviado ao GitHub, main. Modalidades 1x1 e 2x2, parceiros alternando tacadas, treino e preenchimento com bots, salas abertas/convite, espectadores, chat e revanche unânime.
+- Mesa 2D responsiva, mira, força, efeitos aproximados, posicionamento da branca, caçapa da preta marcada, sons e botão de silenciar. Física e decisão das jogadas no servidor; reprodução sincronizada para todos.
+- Regras casuais próprias de Bola 8 documentadas em docs/sinuca.md; sem alteração das regras de Truco ou Dominó.
+- Validação: 88 testes de regras/física/servidor, tipagem/build, sete testes de navegador para sinuca/dominó/truco e conferência de salas abertas. Partida completa de bots finalizada em 21 tacadas.
+- Conferência publicada com duas sessões independentes: criação privada, entrada, prontidão, saída, reprodução idêntica com 107 quadros e posições finais iguais após a primeira tacada; persistência real no Supabase.
