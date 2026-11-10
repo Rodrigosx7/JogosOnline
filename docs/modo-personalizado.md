@@ -37,3 +37,12 @@ Pontuação, mão de 11, capar, corridas, vitória e abandono seguem o motor nor
 O bucket privado `custom-game-assets` é criado pelo servidor ao primeiro envio administrativo. A configuração atual fica em `settings/current.json` e os arquivos têm identificadores aleatórios imutáveis. No desenvolvimento sem Supabase, usa-se `.data/custom-mode`.
 
 As variáveis `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH` e `ADMIN_SESSION_SECRET` devem existir na Vercel antes de publicar o painel. Nenhuma chave ou senha entra no cliente, no Git ou no exemplo de ambiente.
+
+
+## Alterar a senha do administrador
+
+No painel, use a seção Alterar senha. Informe a senha atual, uma nova senha/frase de 10 a 128 caracteres e a confirmação. Espaços são permitidos. O botão Mostrar nova senha facilita a conferência. A senha nova deve ser diferente da atual.
+
+A alteração é imediata e independente de Salvar configurações. O usuário permanece o mesmo e a sessão que fez a alteração é renovada; as outras sessões administrativas são invalidadas. A senha antiga deixa de autenticar, mesmo que ainda seja a senha inicial nas variáveis do servidor.
+
+O servidor grava somente hash scrypt com salt aleatório e uma versão de sessão no objeto privado `settings/admin-credentials.json`. O arquivo local de acesso inicial não é atualizado pelo site e deixa de representar a senha depois que ela for trocada. Não há senha nova em texto puro na configuração, nas salas ou no repositório.

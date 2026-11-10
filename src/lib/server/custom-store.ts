@@ -9,6 +9,18 @@ import { HttpError } from './http';
 
 const bucket='custom-game-assets', root=path.join(process.cwd(),'.data','custom-mode');
 const mime:Record<string,string>={png:'image/png',jpg:'image/jpeg',webp:'image/webp',mp3:'audio/mpeg',ogg:'audio/ogg',wav:'audio/wav'};
+export type AdminCredentials={passwordHash:string;version:string};
+export async function loadAdminCredentials():Promise<AdminCredentials> {
+  let record:AdminCredentials;
+  if(cloudConfigured()) {const {data,error}=await storage().from(bucket).download('settings/admin-credentials.json');if(error){if(String(error.status)==='404'||/not found|does not exist/i.test(error.message))return {passwordHash:process.env.ADMIN_PASSWORD_HASH??'',version:'initial'};throw new Error('Acesso administrativo indisponível');}record=JSON.parse(await data.text());}
+  else try{record=JSON.parse(await readFile(path.join(root,'admin-credentials.json'),'utf8'));}catch(e){if((e as NodeJS.ErrnoException).code==='ENOENT')return {passwordHash:process.env.ADMIN_PASSWORD_HASH??'',version:'initial'};throw e;}
+  if(!/^[a-f0-9]{32}:[a-f0-9]{128}$/.test(record.passwordHash)||!/^[a-f0-9-]{36}$/.test(record.version))throw new Error('Credenciais inválidas');
+  return record;
+}
+export async function saveAdminCredentials(record:AdminCredentials) {
+  if(cloudConfigured()){await ensureBucket();const {error}=await storage().from(bucket).upload('settings/admin-credentials.json',JSON.stringify(record),{contentType:'application/json',upsert:true,cacheControl:'0'});if(error)throw new Error('Falha ao alterar senha');}
+  else{await mkdir(root,{recursive:true});const temporary=path.join(root,`admin-${randomUUID()}.tmp`);await writeFile(temporary,JSON.stringify(record),{mode:0o600});await rename(temporary,path.join(root,'admin-credentials.json'));}
+}
 function storage(){return createClient(process.env.SUPABASE_URL!,process.env.SUPABASE_SERVICE_ROLE_KEY!,{auth:{persistSession:false,autoRefreshToken:false}}).storage;}
 async function ensureBucket(){const s=storage();const {data,error}=await s.getBucket(bucket);if(data)return;if(error&&String(error.status)!=='404'&&!/not found/i.test(error.message))throw new Error('Storage indisponível');const result=await s.createBucket(bucket,{public:false,fileSizeLimit:3*1024*1024,allowedMimeTypes:[...Object.values(mime),'application/json']});if(result.error&&!/already exists/i.test(result.error.message))throw new Error('Falha ao preparar arquivos');}
 export function validateConfig(input:any):CustomConfig {

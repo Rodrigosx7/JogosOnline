@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {randomBytes,scryptSync} from 'node:crypto';
+import {randomBytes,scryptSync,createHmac} from 'node:crypto';
 import {verifyAdminPassword,verifyAdminSession} from './admin-auth';
 import {identifyUpload,validateConfig} from './custom-store';
 import {referencedAsset,defaultCustomConfig} from '../custom-mode';
@@ -19,4 +19,16 @@ test('custom asset configuration permits only supported card ids, audio events a
 test('uploads detect actual binary formats and reject HTML and SVG',()=>{
   assert.equal(identifyUpload(Buffer.from([137,80,78,71,13,10,26,10])),'png');assert.equal(identifyUpload(Buffer.from('ID3audio')),'mp3');assert.equal(identifyUpload(Buffer.from('RIFF0000WAVEdata')),'wav');
   for(const value of ['<script>alert(1)</script>','<svg onload="alert(1)"></svg>','not a photo'])assert.throws(()=>identifyUpload(Buffer.from(value)));
+});
+
+test('admin session versions invalidate all earlier sessions while accepting legacy tokens only before password changes',()=>{
+  const original=[process.env.ADMIN_USERNAME,process.env.ADMIN_PASSWORD_HASH,process.env.ADMIN_SESSION_SECRET];
+  try{
+    process.env.ADMIN_USERNAME='owner';process.env.ADMIN_PASSWORD_HASH='configured';process.env.ADMIN_SESSION_SECRET=randomBytes(32).toString('hex');
+    const now=Date.now(),expires=now+3600000,sign=(payload:string)=>`${payload}.${createHmac('sha256',process.env.ADMIN_SESSION_SECRET!).update(payload).digest('base64url')}`;
+    const old=sign(`${expires}.random.initial`),legacy=sign(`${expires}.random`),current=sign(`${expires}.random.new-version`);
+    assert.equal(verifyAdminSession(old,now,'initial'),true);assert.equal(verifyAdminSession(legacy,now,'initial'),true);
+    assert.equal(verifyAdminSession(old,now,'new-version'),false);assert.equal(verifyAdminSession(legacy,now,'new-version'),false);assert.equal(verifyAdminSession(current,now,'new-version'),true);
+    assert.equal(verifyAdminSession(current,expires+1,'new-version'),false);assert.equal(verifyAdminSession(current+'.extra',now,'new-version'),false);
+  }finally{['ADMIN_USERNAME','ADMIN_PASSWORD_HASH','ADMIN_SESSION_SECRET'].forEach((key,i)=>{if(original[i]===undefined)delete process.env[key];else process.env[key]=original[i];});}
 });
