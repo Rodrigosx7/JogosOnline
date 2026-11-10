@@ -1,0 +1,5 @@
+import {identity} from '@/lib/server/auth';import{body,failure,json,rateLimit,sameOrigin}from'@/lib/server/http';import{accessPoolRoom}from'@/lib/server/pool-rooms';
+export const runtime='nodejs';export const maxDuration=60;
+type Context={params:Promise<{code:string}>};
+export async function GET(request:Request,context:Context){try{const id=await identity();rateLimit(`pool-read:${id}`,180);const {view}=await accessPoolRoom((await context.params).code,id);const known=new URL(request.url).searchParams.get('known');return json(known===`${view.revision}:${view.socialRevision}`?{unchanged:true,revision:view.revision,socialRevision:view.socialRevision,serverTime:view.serverTime}:view);}catch(e){return failure(e);}}
+export async function POST(request:Request,context:Context){try{sameOrigin(request);const id=await identity();rateLimit(`pool-command:${id}`,120);const result=await accessPoolRoom((await context.params).code,id,await body(request));return json(result.view,result.status);}catch(e){return failure(e);}}

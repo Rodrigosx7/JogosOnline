@@ -59,3 +59,8 @@ Regras e validação: `docs/domino.md`. O motor e as APIs são separados dos de 
 ## Tutorial e modo personalizado
 
 Tutorial na página inicial e dentro da sala. Painel `/admin` para fotos e áudios; criação de sala personalizada com tentos normais ou manuais. Documentação: [modo personalizado](docs/modo-personalizado.md). Credenciais iniciais ficam somente no arquivo local ignorado `.data/admin-access.txt`.
+
+
+## Sinuca Bola 8
+
+Acesso em `/sinuca`, com salas 1x1 e 2x2, física autoritativa por tacada, mira/força/efeito, branca na mão, treino com bots, espectadores, chat e revanche. Regras e limites: [sinuca](docs/sinuca.md).

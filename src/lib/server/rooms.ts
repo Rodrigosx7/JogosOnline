@@ -106,7 +106,7 @@ export async function newRoom(playerId: string, input: Record<string, unknown>, 
 export async function openRooms(store: RoomStore = roomStore(), now = Date.now()) {
   const rooms = await store.listOpen();
   const host = (room: Room) => [...room.players, ...(room.spectators ?? [])].find(p => p.id === room.hostId) ?? room.players[0];
-  return rooms.filter(room => !('game' in room && room.game === 'domino') && room.listed && room.status === 'waiting' && !room.players.some(p => p.isBot) && room.players.length < (room.mode === '2x2' ? 4 : 2) && host(room)?.lastSeen > now - 90_000)
+  return rooms.filter(room => (!('game' in room) || room.game === 'truco') && room.listed && room.status === 'waiting' && !room.players.some(p => p.isBot) && room.players.length < (room.mode === '2x2' ? 4 : 2) && host(room)?.lastSeen > now - 90_000)
     .sort((a, b) => host(b).lastSeen - host(a).lastSeen).slice(0, 20)
     .map(room => ({ code: room.code, mode: room.mode, host: host(room).name, players: room.players.length, capacity: room.mode === '2x2' ? 4 : 2,...(room.custom?{customName:room.custom.config.name,scoreMode:room.custom.scoreMode}:{}) }));
 }
@@ -118,7 +118,7 @@ export async function accessRoom(code: string, playerId: string, input?: Record<
     throw new HttpError(400, 'Revisão ou identificador da solicitação inválido.');
   for (let attempt = 0; attempt < 10; attempt++) {
     const stored = await store.get<Room>(code);
-    if (!stored || ('game' in stored.document.state && stored.document.state.game === 'domino')) throw new HttpError(404, 'Mesa não encontrada.');
+    if (!stored || ('game' in stored.document.state && stored.document.state.game !== 'truco')) throw new HttpError(404, 'Mesa não encontrada.');
     const now = Date.now();
     // Resolve deadlines against persisted lastSeen BEFORE recording this request's presence.
     let state = reconcile(stored.document.state, now);

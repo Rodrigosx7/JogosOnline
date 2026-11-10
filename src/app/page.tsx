@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { OpenRooms } from '../components/OpenRooms';
+import {PoolIcon} from '../components/pool/PoolPieces';
 import { DominoIcon } from '../components/DominoPieces';
 import { TrucoTutorial } from '../components/TrucoTutorial';
 import './home.css';
@@ -53,7 +54,7 @@ export default function Home() {
           <span>truco<small>da casa</small></span>
         </a>
         <p className="landing-header-note">Baralho na mesa. Amigos por perto.</p>
-        <nav className="landing-nav" aria-label="Navegação principal"><a className="landing-domino-link" href="/domino"><DominoIcon />Dominó</a>
+        <nav className="landing-nav" aria-label="Navegação principal"><a className="landing-domino-link" href="/sinuca"><PoolIcon/>Sinuca</a><a className="landing-domino-link" href="/domino"><DominoIcon />Dominó</a>
           <a className="landing-rules-link" href="#regras">Como jogar</a>
           <a className="landing-nav-join" href="#room-code" onClick={() => document.getElementById('room-code')?.focus()}>Entrar na mesa</a>
         </nav>

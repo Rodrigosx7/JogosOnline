@@ -259,3 +259,5 @@
 .theme-swatch.theme-classic{background:#17472f}.theme-swatch.theme-skol{background:#f5d02d;color:#d71f2b}
 
 .landing .variant-picker button>span{font-size:16px;letter-spacing:0}.landing .variant-picker button>small{font-size:10px;line-height:1.5}
+
+@media(max-width:700px){.landing-nav{flex-wrap:wrap}.landing-header .landing-nav{justify-content:center;gap:8px 14px}.landing-nav .landing-domino-link{min-height:38px}.landing-nav .landing-nav-join{min-height:38px}.landing-header{padding-bottom:18px}.landing-rules-link{min-height:38px;display:flex;align-items:center}}
