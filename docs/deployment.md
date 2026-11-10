@@ -197,3 +197,11 @@ Deployment dpl_pkQZLSqG45QmnZCXXdAdSrQ36bW6. Lista de salas com vagas na página
 - Acesso administrativo inicial guardado somente no arquivo local ignorado .data/admin-access.txt; servidor publicado usa hash scrypt e sessão assinada. Variáveis privadas configuradas na Vercel; nenhum segredo enviado ao GitHub.
 - Validação: 75 testes de motor/API/segurança; tipagem e build; navegador no celular/PC para tutorial, som, modo normal, criação personalizada, upload e sigilo, snapshots, animação em sessões independentes e votação. Conferência pública passou para login, upload privado/Supabase, configuração persistida, sala manual com bot e unanimidade.
 - GitHub: Rodrigosx7/JogosOnline, main; tutorial 5f7a9da e personalizado 0fb3f1f. Publicação feita pela Vercel CLI.
+
+
+## Alteração de senha administrativa — 2026-11-09
+- Deployment dpl_5Cbzz6Vi9XpzTEPWq2w7SFctZuDm, READY, https://truco-da-casa.vercel.app/admin.
+- Adicionada seção Alterar senha: senha atual, nova senha/frase de 10 a 128 caracteres, confirmação e opção de mostrar a nova senha.
+- Hash scrypt persistido em objeto privado do Supabase; a versão da sessão muda para invalidar sessões antigas, mantendo renovada somente a que fez a alteração. Login inicial por ambiente preservado até a primeira troca.
+- Verificação: 76 testes de motor/API/segurança, tipagem/build e teste de navegador local alterando/restaurando a senha, rejeitando a antiga e revogando outra sessão. Conferência publicada confirmou login atual e formulário; nenhuma senha de produção foi alterada durante a verificação.
+- Código: 4729ad9, enviado ao GitHub.
