@@ -14,4 +14,5 @@
 @media(prefers-reduced-motion:reduce){.tutorial-deal .playing-card{animation:none}}
 .tutorial-case-cards{display:flex;justify-content:center;gap:24px;margin:24px 0}.tutorial-case-start{margin-top:20px!important}.room-page .room-topline{flex-wrap:wrap;gap:12px}.room-is-playing .room-topline>div:first-child{display:none}.room-page .room-topline .tutorial-open-button{margin-right:auto}
 .room-is-playing .tutorial-open-button{min-height:28px;height:28px;padding:4px 10px;font-size:12px}
+@media(max-width:700px){.room-page .tutorial-open-button{display:none}}
 @media(min-width:1001px){.room-is-playing .felt-table{height:clamp(340px,calc(100dvh - 400px),560px)}}
