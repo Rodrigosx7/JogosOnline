@@ -56,6 +56,7 @@ export default function Home() {
         <p className="landing-header-note">Baralho na mesa. Amigos por perto.</p>
         <nav className="landing-nav" aria-label="Navegação principal"><a className="landing-domino-link" href="/sinuca"><PoolIcon/>Sinuca</a><a className="landing-domino-link" href="/domino"><DominoIcon />Dominó</a>
           <a className="landing-rules-link" href="#regras">Como jogar</a>
+          <a className="landing-mobile-tutorial-link" href="/como-jogar">Como jogar</a>
           <a className="landing-nav-join" href="#room-code" onClick={() => document.getElementById('room-code')?.focus()}>Entrar na mesa</a>
         </nav>
         <span className="landing-header-ornament" aria-hidden="true">♣</span>
@@ -111,7 +112,7 @@ export default function Home() {
       </section>
 
       <section id="regras" className="landing-rules" aria-label="Tutorial completo do Truco da Casa"><TrucoTutorial /></section>
-      <footer className="landing-footer"><span>Truco da casa</span><p>A melhor parte é quem senta à mesa.</p><a href="/admin">Administração</a></footer>
+      <footer className="landing-footer"><span>Truco da casa</span><a className="landing-admin-link" href="/admin">Administração</a></footer>
     </main>
   );
 }
