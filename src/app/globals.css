@@ -75,6 +75,14 @@
 
 @media(max-width:700px){.room-page .tento-pile{top:9%;width:46px}.room-page .tento-pile-0{left:5%}.room-page .tento-pile-1{right:5%}.room-page .tento-label{font-size:8px}.room-page .tento-seeds{grid-template-columns:repeat(4,8px);gap:2px;margin-top:3px;min-height:0}.room-page .tento-seed{width:7px;height:9px}}
 
+@media(max-width:570px){.room-is-playing .arena-left{left:30%}.room-is-playing .arena-right{left:70%}.room-is-playing .arena-bottom{top:65%}}
+
+@media(max-width:570px){.room-is-playing .game-sidebar{margin-top:48px}}
+
+@media(max-width:570px){.room-is-playing .table-wrap:has(.table-hud){padding-top:10px}.room-is-playing .table-hud{gap:16px;margin-bottom:20px}.room-is-playing .score-and-tricks{gap:12px}}
+
+@media(max-width:570px){.room-page .lobby-table{padding-top:56px}}
+
 .table-wrap .your-hand .play-controls{margin-top:20px}
 
 /* Keep the card fan at the table edge without a hand illustration. */

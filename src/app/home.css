@@ -269,7 +269,9 @@
 
   .landing .landing-nav .landing-mobile-tutorial-link {
     display: flex;
-    border: 1px solid var(--landing-border);
+    border-color: var(--landing-wine);
+    background: var(--landing-wine);
+    color: #fff8e8;
     border-radius: 9px;
     text-decoration: none;
   }
