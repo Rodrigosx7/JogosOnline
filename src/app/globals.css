@@ -71,6 +71,10 @@
 
 @media(max-width:570px){.seat-1.seats-4{left:8%}.seat-3.seats-4{left:92%}}
 
+@media(max-width:700px){.room-page .room-topline .rules-details{display:none}}
+
+@media(max-width:700px){.room-page .tento-pile{top:9%;width:46px}.room-page .tento-pile-0{left:5%}.room-page .tento-pile-1{right:5%}.room-page .tento-label{font-size:8px}.room-page .tento-seeds{grid-template-columns:repeat(4,8px);gap:2px;margin-top:3px;min-height:0}.room-page .tento-seed{width:7px;height:9px}}
+
 .table-wrap .your-hand .play-controls{margin-top:20px}
 
 /* Keep the card fan at the table edge without a hand illustration. */
