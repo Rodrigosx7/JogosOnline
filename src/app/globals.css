@@ -414,6 +414,7 @@
 @media(max-width:360px){.room-code-copy{width:60px}.room-code-copy strong{font-size:9px}}
 @media(max-width:340px){.room-invite-mobile{display:none}.room-invite-button{width:36px;padding:0}}
 @media(max-width:700px){.room-page .site-header:has(.room-leave-button){height:auto;min-height:82px;padding-top:7px;padding-bottom:7px}.room-page .site-header:has(.room-leave-button) .room-header-actions{align-content:center}}
+@media(max-width:570px){.room-page .lobby-table:has(.table-hud){padding-top:56px}}
 
 .share-dialog-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px;background:#17120eb0}
 .share-dialog{position:relative;width:min(100%,380px);padding:28px;border:1px solid #cdaa70;border-radius:18px;background:#fffaf0;box-shadow:0 20px 60px #160f0b45}
