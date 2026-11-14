@@ -259,6 +259,12 @@
 .landing .variant-picker button>span{font-size:16px;letter-spacing:0}.landing .variant-picker button>small{font-size:10px;line-height:1.5}
 
 @media (max-width: 700px) {
+  .landing .landing-nav .landing-rules-link,
+  .landing .landing-tutorial-link,
+  .landing .landing-rules:has(.truco-tutorial) {
+    display: none;
+  }
+
   .landing-header {
     flex-direction: column;
     gap: 20px;
