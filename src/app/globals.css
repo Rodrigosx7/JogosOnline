@@ -402,3 +402,11 @@
 @media(max-width:360px){.room-code-copy{width:60px}.room-code-copy strong{font-size:9px}}
 @media(max-width:340px){.room-invite-mobile{display:none}.room-invite-button{width:36px;padding:0}}
 @media(max-width:700px){.room-page .site-header:has(.room-leave-button){height:auto;min-height:82px;padding-top:7px;padding-bottom:7px}.room-page .site-header:has(.room-leave-button) .room-header-actions{align-content:center}}
+
+.share-dialog-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px;background:#17120eb0}
+.share-dialog{position:relative;width:min(100%,380px);padding:28px;border:1px solid #cdaa70;border-radius:18px;background:#fffaf0;box-shadow:0 20px 60px #160f0b45}
+.share-dialog h2{margin:0 34px 8px 0;color:var(--wine);font:26px/1.1 Georgia,serif}
+.share-dialog p{margin:0 0 20px;color:var(--muted);font-size:14px}
+.share-dialog-close{position:absolute;top:12px;right:14px;width:36px;height:36px;border-radius:50%;background:#efe4cf;font-size:25px;line-height:1}
+.share-dialog-action{display:flex;width:100%;min-height:48px;align-items:center;justify-content:center;margin-top:10px;padding:10px 14px;border:1px solid #cdbb9b;border-radius:10px;background:#fffaf0;color:var(--wine);font-weight:700}
+.share-dialog-action:first-of-type{background:var(--wine);color:#fffaf0}
