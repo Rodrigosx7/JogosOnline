@@ -9,7 +9,7 @@ for (const mode of ['1x1', '2x2'] as const) {
     const pages: Page[] = [];
     try {
       for (let i = 0; i < count; i++) {
-        const context = await browser.newContext();
+        const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
         contexts.push(context); pages.push(await context.newPage());
       }
       const owner = pages[0];
@@ -79,8 +79,19 @@ for (const mode of ['1x1', '2x2'] as const) {
       for (let played = 1; played <= count; played++) {
         await clickCurrent();
         await Promise.all(pages.map(page => expect(page.getByTestId('table-card')).toHaveCount(played)));
-        if (played < count) expect(state.collecting).toBe(false);
-        for(let i=0;i<count;i++){ const self=identities[i].players.find((p:any)=>p.id===identities[i].playerId); for(const play of state.trick){ await expect(pages[i].locator(`[data-testid="played-card"][data-seat="${play.seat}"]`)).toHaveAttribute('data-relative-seat',String((play.seat-self.seat+count)%count)); }}
+        if (played < count) {
+          expect(state.collecting).toBe(false);
+          const lastSeat = state.trick.at(-1).seat;
+          expect(state.currentSeat).toBe((lastSeat + 1) % count);
+          if (count === 4) {
+            const viewer = pages[identities.findIndex(view => view.players.some((p: any) => p.id === view.playerId && p.seat === lastSeat))];
+            const nextX = (await viewer.locator('.table-seat.seat-3').boundingBox())!.x;
+            const ownX = (await viewer.locator('.table-seat.seat-0').boundingBox())!.x;
+            expect(nextX).toBeGreaterThan(ownX);
+            await expect(viewer.locator('.table-seat.seat-3')).toHaveClass(/active-seat/);
+          }
+        }
+        for(let i=0;i<count;i++){ const self=identities[i].players.find((p:any)=>p.id===identities[i].playerId); for(const play of state.trick){ await expect(pages[i].locator(`[data-testid="played-card"][data-seat="${play.seat}"]`)).toHaveAttribute('data-relative-seat',String((self.seat-play.seat+count)%count)); }}
       }
       expect(state.collecting).toBe(true);
       expect(state.trick).toHaveLength(count);
@@ -117,7 +128,7 @@ for (const mode of ['1x1', '2x2'] as const) {
         expect(await hidden.textContent()).not.toContain(coveredPlay.card.id);
       }
       await owner.screenshot({path: `test-results/hand-table-${mode}.png`,fullPage:true});
-      await owner.setViewportSize({width:390,height:844});
+      await owner.setViewportSize({width:390,height:880});
       expect(await owner.locator('.felt-table').evaluate(el=>el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(400);
       expect(await owner.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
       await owner.screenshot({path:`test-results/table-mobile-${mode}.png`,fullPage:true});
