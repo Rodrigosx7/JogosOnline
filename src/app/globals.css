@@ -423,3 +423,18 @@
 .share-dialog-close{position:absolute;top:12px;right:14px;width:36px;height:36px;border-radius:50%;background:#efe4cf;font-size:25px;line-height:1}
 .share-dialog-action{display:flex;width:100%;min-height:48px;align-items:center;justify-content:center;margin-top:10px;padding:10px 14px;border:1px solid #cdbb9b;border-radius:10px;background:#fffaf0;color:var(--wine);font-weight:700}
 .share-dialog-action:first-of-type{background:var(--wine);color:#fffaf0}
+
+@media(max-width:570px){
+  .room-page .table-center:has(.lobby-actions){width:min(54%,225px);pointer-events:none}
+  .room-page .table-center .lobby-actions{padding:8px;gap:4px;border-radius:12px;pointer-events:auto}
+  .room-page .table-center .lobby-actions h3{font-size:14px}
+  .room-page .table-center .lobby-actions>p{display:none}
+  .room-page .table-center .lobby-actions>.button,.room-page .table-center .lobby-actions .fill-bots-button{min-height:32px;margin:0;padding:5px 7px;font-size:10px}
+  .room-page .lobby-readiness li{padding:2px 0;font-size:8px}
+  .room-page .table-center .lobby-actions>small{margin-top:0;font-size:8px}
+  .room-page .table-center:has(.lobby-actions)>.invite-on-table{min-height:28px;margin-top:6px;padding:5px 8px;font-size:8px;pointer-events:auto}
+  .room-is-playing .table-wrap:has(.table-hud){padding-top:0}
+  .room-is-playing .table-hud{gap:26px;margin-bottom:36px}
+  .room-is-playing .score-and-tricks{gap:14px}
+  .room-is-playing .table-hud .table-turn-status{position:relative;top:-6px}
+}
