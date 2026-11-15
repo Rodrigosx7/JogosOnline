@@ -437,5 +437,8 @@
   .room-is-playing .table-hud{gap:26px;margin-bottom:36px}
   .room-is-playing .score-and-tricks{gap:14px}
   .room-is-playing .table-hud .table-turn-status{position:static;left:auto;transform:none}
-  .room-is-playing .table-center .hand-stake{position:absolute;left:8%;top:0;transform:translateX(-50%);z-index:5}
+  .room-is-playing .table-center .hand-stake{position:absolute;left:8%;top:-90px;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:4px;padding:3px 7px;white-space:nowrap}
+  .room-is-playing .table-center .hand-stake>span{display:inline;font-size:8px}
+  .room-is-playing .table-center .hand-stake>strong{font-size:13px;line-height:1.1}
+  .room-is-playing .table-center .hand-stake>strong small{font-size:8px}
 }
