@@ -437,4 +437,5 @@
   .room-is-playing .table-hud{gap:26px;margin-bottom:36px}
   .room-is-playing .score-and-tricks{gap:14px}
   .room-is-playing .table-hud .table-turn-status{position:static;left:auto;transform:none}
+  .room-is-playing .table-center .hand-stake{position:absolute;left:8%;top:0;transform:translateX(-50%);z-index:5}
 }
