@@ -416,6 +416,10 @@
 @media(max-width:700px){.room-page .site-header:has(.room-leave-button){height:auto;min-height:82px;padding-top:7px;padding-bottom:7px}.room-page .site-header:has(.room-leave-button) .room-header-actions{align-content:center}}
 @media(max-width:570px){.room-page .lobby-table:has(.table-hud){padding-top:56px}}
 .table-hud .table-hud-stake{display:none}
+@media(min-width:1001px){
+  .room-is-playing .felt-table,.room-is-playing.theme-skol .felt-table{width:min(100%,clamp(340px,calc(100dvh - 380px),560px));aspect-ratio:1;height:auto;margin-inline:auto;border-radius:12%}
+  .room-is-playing .felt-table:before,.room-is-playing .felt-inset{border-radius:10%}
+}
 
 .share-dialog-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px;background:#17120eb0}
 .share-dialog{position:relative;width:min(100%,380px);padding:28px;border:1px solid #cdaa70;border-radius:18px;background:#fffaf0;box-shadow:0 20px 60px #160f0b45}
