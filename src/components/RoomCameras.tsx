@@ -2,16 +2,17 @@
 import {useEffect,useRef,useState} from 'react';
 type Camera={playerId:string;session:string;at:number};
 type Signal={id:string;from:string;session:string;targetSession:string;sdp:RTCSessionDescriptionInit};
-type Props={playerId:string;players:{id:string;name:string}[];cameras:Camera[];signals:Signal[];onSend:(c:Record<string,unknown>)=>Promise<unknown>};
-function Video({stream,name,local=false}:{stream:MediaStream;name:string;local?:boolean}){
+type Props={playerId:string;players:{id:string;name:string}[];cameras:Camera[];signals:Signal[];onSend:(c:Record<string,unknown>)=>Promise<unknown>;onStreams:(streams:Record<string,MediaStream>)=>void};
+export function SeatCamera({stream,name,local=false}:{stream:MediaStream;name:string;local?:boolean}){
  const video=useRef<HTMLVideoElement>(null);
  useEffect(()=>{if(video.current){video.current.srcObject=stream;void video.current.play().catch(()=>{});}},[stream]);
- return <figure><video ref={video} autoPlay playsInline muted={local}/><figcaption>{name}{local?' (você)':''}</figcaption></figure>;
+ return <div className="seat-camera"><video ref={video} aria-label={`Câmera de ${name}`} autoPlay playsInline muted={local}/></div>;
 }
-export function RoomCameras({playerId,players,cameras,signals,onSend}:Props){
+export function RoomCameras({playerId,players,cameras,signals,onSend,onStreams}:Props){
  const [local,setLocal]=useState<MediaStream|null>(null),[remote,setRemote]=useState<Record<string,MediaStream>>({}),[error,setError]=useState(''),[starting,setStarting]=useState(false);
  const peers=useRef(new Map<string,{pc:RTCPeerConnection;session:string}>()),session=useRef(''),seen=useRef(new Set<string>()),stream=useRef<MediaStream|null>(null),send=useRef(onSend),queue=useRef(Promise.resolve());
  send.current=onSend;
+ useEffect(()=>{onStreams(local?{...remote,[playerId]:local}:remote);},[local,remote,playerId,onStreams]);
  function closePeers(){peers.current.forEach(v=>v.pc.close());peers.current.clear();setRemote({});}
  function stop(){session.current='';stream.current?.getTracks().forEach(t=>t.stop());stream.current=null;setLocal(null);closePeers();}
  async function toggle(){
@@ -62,5 +63,5 @@ export function RoomCameras({playerId,players,cameras,signals,onSend}:Props){
    }
   }).catch(()=>{if(!cancelled())setError('Não foi possível conectar o vídeo. Tente ativar novamente.');});
  },[local,cameras,signals,playerId]);
- return <section className="room-cameras" aria-label="Câmeras da mesa"><button className="button" disabled={starting} onClick={()=>void toggle()}>{starting?'Ativando câmera…':local?'Desligar câmera':'Ativar câmera'}</button><small>Vídeo para os jogadores com câmera ativa · sem microfone</small>{error&&<p role="alert">{error}</p>}<div className="camera-grid">{local&&<Video stream={local} name={players.find(p=>p.id===playerId)?.name??'Você'} local/>}{Object.entries(remote).map(([id,media])=><Video key={id} stream={media} name={players.find(p=>p.id===id)?.name??'Jogador'}/>)}</div></section>;
+ return <section className="room-cameras" aria-label="Câmeras da mesa"><button className="button" disabled={starting} onClick={()=>void toggle()}>{starting?'Ativando câmera…':local?'Desligar câmera':'Ativar câmera'}</button><small>Vídeo para os jogadores com câmera ativa · sem microfone</small>{error&&<p role="alert">{error}</p>}</section>;
 }
