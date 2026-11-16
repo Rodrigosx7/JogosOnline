@@ -21,6 +21,8 @@ export type Room = {
   cameras?: {playerId:string;session:string;at:number}[];
   cameraSignals?: {id:string;from:string;to:string;session:string;targetSession:string;sdp:{type:string;sdp:string};at:number}[];
   pullUntil?: number;
+  pullLimit?: number;
+  pullUsed?: number[];
   finishVotes?: string[];
   matchId?:string;
   pullEvents?: { id: string; playerId: string; name: string; team: number; amount: number; before: number; after: number; at: number }[];
@@ -93,7 +95,7 @@ function startHand(r: Room, now: number, advanceDealer = false) {
 function award(r: Room, winner: number | null, amount: number, now: number, reason: string) {
   resolveDecision(r, r.pending?.id); resolveDecision(r, r.eleven?.id);
   log(r, reason);
-  if (r.custom?.scoreMode === 'manual') { r.pullUntil = now + 5000; startHand(r, r.pullUntil); return; }
+  if (r.custom?.scoreMode === 'manual') { r.pullUntil = now + 5000; r.pullLimit=winner===null?0:amount; r.pullUsed=[0,0]; startHand(r, r.pullUntil); return; }
   let matchWon = false;
   if (winner !== null) {
     const result = scoreAfterWin(r.scores[winner], amount);
@@ -218,6 +220,11 @@ export function applyCommand(room: Room, playerId: string, command: any, now: nu
         if(!Number.isInteger(amount)||amount===0||Math.abs(amount)>11||before+amount<0||before+amount>99)fail('Puxe ou devolva de 1 a 11 tentos. O placar vai de 0 a 99.');
         if(r.pullEvents?.some(e=>e.playerId===p!.id&&now-e.at<1000))fail('Aguarde a mão terminar de puxar antes de repetir.');
         if(amount>0 && (!r.pullUntil || now>=r.pullUntil)) fail('Só pode puxar tentos nos 5 segundos após a rodada.');
+        if(amount>0){
+          const remaining=Math.max(0,(r.pullLimit??0)-(r.pullUsed?.[ownTeam]??0));
+          if(amount>remaining)fail(`Nesta rodada sua equipe pode puxar no máximo mais ${remaining} tento(s).`);
+          r.pullUsed??=[0,0];r.pullUsed[ownTeam]+=amount;
+        }
         r.scores[ownTeam]+=amount;
         if(now<(r.handStartedAt??0)){
           const teams=[0,1].filter(t=>r.scores[t]===11);
@@ -281,7 +288,7 @@ export function applyCommand(room: Room, playerId: string, command: any, now: nu
       if (r.rematchVotes.length === size(r)) {
         r.status = 'playing'; r.scores = [0, 0]; r.winner = null; r.handNumber = 0; r.history = [];
         r.rematchVotes = []; r.players.forEach(v => v.lastSeen = now); startHand(r, now, true);
-        r.finishVotes=[];r.pullEvents=[];r.pullUntil=undefined;r.matchId=randomUUID();
+        r.finishVotes=[];r.pullEvents=[];r.pullUntil=undefined;r.pullLimit=0;r.pullUsed=[0,0];r.matchId=randomUUID();
       }
     } else {
       if (r.status !== 'playing') fail('A partida não está em andamento.');
@@ -419,6 +426,7 @@ export function playerView(room: Room, playerId: string, now: number): any {
     hostId: r.hostId ?? r.players[0]?.id, tableTheme: r.tableTheme ?? 'classic', isSpectator: watching,
     cameras:(r.cameras??[]).filter(c=>now-c.at<25000&&r.players.some(p=>p.id===c.playerId)),
     cameraSignals:(r.cameraSignals??[]).filter(c=>c.to===playerId&&now-c.at<30000),
+    pullRemaining:p&&now<(r.pullUntil??0)?Math.max(0,(r.pullLimit??0)-(r.pullUsed?.[team(p.seat)]??0)):0,
     pullUntil:r.pullUntil??null,custom:r.custom??null,matchId:r.matchId??null,finishVotes:r.finishVotes??[],pullEvents:(r.pullEvents??[]).filter(e=>now-e.at<4000),
     spectators: (r.spectators ?? []).map(({ id, name }) => ({ id, name })),
     runRequest: r.runRequest ?? null,

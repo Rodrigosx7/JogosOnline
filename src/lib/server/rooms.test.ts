@@ -174,7 +174,7 @@ test('manual pulls and end votes merge concurrent revisions and reject commands 
   async function send(id:string,command:any){const current=await accessRoom(code,id,undefined,store).catch(()=>({view:{revision:0}}));return accessRoom(code,id,{command,revision:current.view.revision,requestId:`manual-sequence-${++index}`},store);}
   await send('b',{type:'join',name:'Bia'});await send('a',{type:'ready'});await send('b',{type:'ready'});
   let state=(await accessRoom(code,'a',undefined,store)).view;
-  const stored=await store.get<any>(code);stored!.document.state.pullUntil=Date.now()+5000;await store.compareAndSwap(code,stored!.version,stored!.document);
+  const stored=await store.get<any>(code);stored!.document.state.pullUntil=Date.now()+5000;stored!.document.state.pullLimit=3;await store.compareAndSwap(code,stored!.version,stored!.document);
   const matchId=state.matchId,revision=state.revision;
   const pulled=await Promise.all(['a','b'].map((id,i)=>accessRoom(code,id,{command:{type:'pull',amount:3,matchId},revision,requestId:`concurrent-pull-${i}`},store)));
   assert.deepEqual(pulled.map(x=>x.status),[200,200]);assert.deepEqual((await accessRoom(code,'a',undefined,store)).view.scores,[3,3]);

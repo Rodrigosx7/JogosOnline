@@ -565,18 +565,18 @@ test('spectators have no private cards, seats and kicks require lobby, host tran
 test('manual pulls are limited to five seconds after the hand, returns remain free, and more than eleven finishes',()=>{
   let r=start();r.custom={config:defaultCustomConfig(),scoreMode:'manual'};
   assert.throws(()=>applyCommand(r,'p0',{type:'pull',amount:3},100));
-  r.pullUntil=6000;r.handStartedAt=6000;
+  r.pullLimit=11;r.pullUntil=6000;r.handStartedAt=6000;
   r=applyCommand(r,'p0',{type:'pull',amount:11},1000);assert.equal(r.status,'playing');
   assert.throws(()=>applyCommand(r,'p0',{type:'pull',amount:1},6000));
   r=applyCommand(r,'p0',{type:'pull',amount:-1},9000);assert.equal(r.scores[0],10);
-  r.pullUntil=16000;r.handStartedAt=16000;
+  r.pullLimit=3;r.pullUsed=[0,0];r.pullUntil=16000;r.handStartedAt=16000;
   r=applyCommand(r,'p0',{type:'pull',amount:3},11000);
   assert.equal(r.status,'finished');assert.equal(r.winner,0);assert.equal(r.deadline,null);
 });
 
 test('manual scores only affect own team; normal rooms and spectators cannot pull or vote',()=>{
   const regular=start('2x2');assert.throws(()=>applyCommand(regular,'p0',{type:'pull',amount:3},100));assert.throws(()=>applyCommand(regular,'p0',{type:'finish-vote'},100));
-  let r=structuredClone(regular);r.custom={config:defaultCustomConfig(),scoreMode:'manual'};r.pullUntil=5000;
+  let r=structuredClone(regular);r.custom={config:defaultCustomConfig(),scoreMode:'manual'};r.pullLimit=11;r.pullUntil=5000;
   r=applyCommand(r,'p2',{type:'pull',amount:7,team:1},100);assert.deepEqual(r.scores,[7,0]);
   for(const amount of [0,12,-8,1.5,'3'])assert.throws(()=>applyCommand(r,'p0',{type:'pull',amount},2000));
   r=applyCommand(r,'viewer',{type:'watch',name:'Visitante'},1000);assert.throws(()=>applyCommand(r,'viewer',{type:'pull',amount:3},2000));assert.throws(()=>applyCommand(r,'viewer',{type:'finish-vote'},2000));
@@ -618,5 +618,22 @@ test('all eight text reactions use table signals without creating chat messages'
   const view=playerView(r,'p1',100);
   assert.equal(view.signals.at(-1).kind,`phrase-${index}`);
   assert.equal(view.chat.length,0);assert.equal(r.revision,revision);
+ }
+});
+
+test('manual pull budget follows the completed hand and is shared by partners',()=>{
+ for(const stake of [3,5,7,9,11]){
+  let r=start();r.custom={config:defaultCustomConfig(),scoreMode:'manual'};r.stake=stake;r=winHand(r);
+  r.mode='2x2';r.players.push({id:'p2',name:'Parceiro',seat:2,ready:true,lastSeen:0});
+  assert.equal(r.pullLimit,stake);
+  const at=r.pullUntil!-4500;
+  assert.throws(()=>applyCommand(r,'p0',{type:'pull',amount:stake+1},at));
+  r=applyCommand(r,'p0',{type:'pull',amount:stake-1},at);
+  assert.equal(playerView(r,'p2',at).pullRemaining,1);
+  r=applyCommand(r,'p2',{type:'pull',amount:1},at+1500);
+  assert.equal(r.scores[0],stake);
+  assert.throws(()=>applyCommand(r,'p0',{type:'pull',amount:1},at+3000));
+  r=applyCommand(r,'p0',{type:'pull',amount:-1},r.pullUntil!+10000);
+  assert.equal(r.scores[0],stake-1);
  }
 });
