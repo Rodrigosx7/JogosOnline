@@ -610,3 +610,13 @@ test('camera negotiation is private to its recipient and does not invalidate a t
  r=applyCommand(r,'p1',{type:'camera',session:'session-b',enabled:false},300);
  assert.throws(()=>applyCommand(r,'p0',offer,400));
 });
+
+test('all eight text reactions use table signals without creating chat messages',()=>{
+ for(let index=0;index<8;index++){
+  let r=start('2x2');const revision=r.revision;
+  r=applyCommand(r,'p0',{type:'signal',kind:`phrase-${index}`},100);
+  const view=playerView(r,'p1',100);
+  assert.equal(view.signals.at(-1).kind,`phrase-${index}`);
+  assert.equal(view.chat.length,0);assert.equal(r.revision,revision);
+ }
+});
