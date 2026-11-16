@@ -418,6 +418,17 @@
 .table-hud .table-hud-stake{display:none}
 @media(min-width:1001px){.room-page .table-center:has(.lobby-actions){left:50%;transform:translate(-50%,-50%)}}
 @media(min-width:1001px){
+  .room-page:has(.lobby-table) .room-topline{max-width:1180px;margin-inline:auto;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px}
+  .room-page:has(.lobby-table) .room-topline>div:first-child{grid-column:2;text-align:center}
+  .room-page:has(.lobby-table) .room-topline .rules-details{grid-column:3;justify-self:end}
+  .room-page:has(.lobby-table) .game-layout{grid-template-columns:minmax(0,1fr);justify-items:center;max-width:1180px;margin-inline:auto}
+  .room-page:has(.lobby-table) .lobby-table{width:100%;padding-inline:0}
+  .room-page:has(.lobby-table) .table-center:has(.lobby-actions){left:50%;transform:translate(-50%,-50%)}
+  .room-page:has(.lobby-table) .game-sidebar{width:min(100%,1180px);margin:24px auto 0}
+  .room-page:has(.lobby-table) .game-sidebar>.room-members{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .room-page:has(.lobby-table) .game-sidebar>.room-members>h3{margin:0}
+}
+@media(min-width:1001px){
   .room-is-playing .felt-table,.room-is-playing.theme-skol .felt-table{width:min(100%,clamp(340px,calc(100dvh - 380px),560px));aspect-ratio:1;height:auto;margin-inline:auto;border-radius:12%}
   .room-is-playing .felt-table:before,.room-is-playing .felt-inset{border-radius:10%}
 }
