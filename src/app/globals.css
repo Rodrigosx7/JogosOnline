@@ -416,6 +416,7 @@
 @media(max-width:700px){.room-page .site-header:has(.room-leave-button){height:auto;min-height:82px;padding-top:7px;padding-bottom:7px}.room-page .site-header:has(.room-leave-button) .room-header-actions{align-content:center}}
 @media(max-width:570px){.room-page .lobby-table:has(.table-hud){padding-top:56px}}
 .table-hud .table-hud-stake{display:none}
+@media(min-width:1001px){.room-page .table-center:has(.lobby-actions){left:50%;transform:translate(-50%,-50%)}}
 @media(min-width:1001px){
   .room-is-playing .felt-table,.room-is-playing.theme-skol .felt-table{width:min(100%,clamp(340px,calc(100dvh - 380px),560px));aspect-ratio:1;height:auto;margin-inline:auto;border-radius:12%}
   .room-is-playing .felt-table:before,.room-is-playing .felt-inset{border-radius:10%}
