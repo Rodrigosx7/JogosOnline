@@ -19,7 +19,7 @@ export async function POST(request: Request, context: Context) {
     const playerId = await identity();
     rateLimit(`command:${playerId}`, 120);
     const { code } = await context.params;
-    const result = await accessRoom(code, playerId, await body(request));
+    const result = await accessRoom(code, playerId, await body(request, 20000));
     return json(result.view, result.status);
   } catch (error) { return failure(error); }
 }

@@ -461,3 +461,29 @@
   .room-is-playing .table-hud .table-hud-stake>strong{font-size:14px;line-height:1.1}
   .room-is-playing .table-hud .table-hud-stake>strong small{font-size:9px}
 }
+
+/* Compact score markers stay in the upper corners, clear of played cards. */
+.room-page .tento-pile{top:7%;width:48px}
+.room-page .tento-pile-0{left:4%}.room-page .tento-pile-1{right:4%}
+.room-page .tento-seeds{grid-template-columns:repeat(4,7px);gap:3px;min-height:0;margin-top:4px}
+.room-page .tento-seed{width:7px;height:10px}.room-page .tento-label{font-size:9px}
+.hand-signals{position:relative;flex-wrap:wrap}
+.hand-signals>button:last-of-type{font-size:11px;width:auto;padding-inline:10px}
+.table-phrases{flex-basis:100%;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:8px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.hand-signals .table-phrases button{width:auto;height:auto;min-height:32px;padding:6px 10px;font-size:13px}
+.room-cameras{padding:12px 0}.room-cameras>small{display:block;margin:6px 0;color:var(--muted)}
+.camera-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.camera-grid figure{margin:0;min-width:0}.camera-grid video{width:100%;aspect-ratio:4/3;object-fit:cover;background:#211b18;border-radius:10px}.camera-grid figcaption{font-size:11px;overflow:hidden;text-overflow:ellipsis}
+@media(min-width:1001px){
+ .room-is-playing .room-main{max-width:1600px;margin-inline:auto;padding-top:4px}
+ .room-is-playing .game-layout{grid-template-columns:minmax(0,1fr) 240px;gap:28px}
+ .room-is-playing .table-wrap{width:100%;max-width:1000px;justify-self:center;padding-bottom:140px}
+ .room-is-playing .table-hud{flex-direction:row;flex-wrap:wrap;gap:10px 16px;min-height:0;margin-bottom:42px;padding:0}
+ .room-is-playing .table-hud>.custom-room-controls{flex-basis:100%}
+ .room-is-playing .table-hud .table-turn-status{width:auto;flex:1;min-width:200px}
+ .room-is-playing .room-topline{min-height:0;margin-bottom:8px}
+ .room-is-playing .felt-table,.room-is-playing.theme-skol .felt-table{width:min(100%,clamp(480px,calc(100dvh - 390px),780px));height:auto;aspect-ratio:1}
+ .room-is-playing .current-trick-arena{height:clamp(360px,50dvh,520px)}
+ .room-is-playing .table-hud .table-hud-stake{display:flex;position:static;transform:none;align-items:center;gap:6px;padding:3px 10px;margin:0}
+ .room-is-playing .table-hud-stake>strong{font-size:18px}.room-is-playing .table-center>.hand-stake{display:none}
+ .room-is-playing .game-sidebar{margin-top:24px}
+}

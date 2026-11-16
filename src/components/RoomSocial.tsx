@@ -20,7 +20,9 @@ export function RoomSocial({ playerId, chat, busy, onSend }: Props) {
 }
 
 export function HandSignals({ signals, playerId, busy, now, onSend }: { signals: PartnerSignal[]; playerId: string; busy: boolean; now: number; onSend: Props['onSend'] }) {
+  const [more,setMore]=useState(false);
+  const phrases=['ladraoo','truco covarde','seu barriga','arigato','alcoolatra','recebaaa','poar','baleia jubarte'];
   const own = signals.findLast(signal => signal.playerId === playerId);
   const cooling = !!own && now - own.at < 2000;
-  return <div className="hand-signals" role="group" aria-label="Sinais da mesa">{SIGNAL_OPTIONS.map(signal => <button key={signal.kind} type="button" disabled={busy || cooling} onClick={() => void onSend({ type: 'signal', kind: signal.kind })} aria-label={`Sinalizar ${signal.label}`}><span aria-hidden="true">{signal.emoji}</span></button>)}</div>;
+  return <div className="hand-signals" role="group" aria-label="Sinais da mesa">{SIGNAL_OPTIONS.map(signal => <button key={signal.kind} type="button" disabled={busy || cooling} onClick={() => void onSend({ type: 'signal', kind: signal.kind })} aria-label={`Sinalizar ${signal.label}`}><span aria-hidden="true">{signal.emoji}</span></button>)}<button type="button" aria-expanded={more} onClick={()=>setMore(!more)}>Mais</button>{more&&<div className="table-phrases">{phrases.map(text=><button key={text} disabled={busy} onClick={()=>void onSend({type:'chat',text}).then(ok=>{if(ok)setMore(false);})}>{text}</button>)}</div>}</div>;
 }

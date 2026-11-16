@@ -13,6 +13,14 @@ function validateCommand(value: unknown): Command {
   const input = value as Record<string, unknown>;
   let command: Record<string, unknown>;
   switch (input.type) {
+    case 'camera':
+      if(typeof input.enabled!=='boolean'||typeof input.session!=='string'||!/^[a-zA-Z0-9-]{1,64}$/.test(input.session))throw new HttpError(400,'Câmera inválida.');
+      command={type:'camera',enabled:input.enabled,session:input.session};break;
+    case 'camera-signal': {
+      const sdp=input.sdp as {type?:unknown;sdp?:unknown}|null;
+      if(typeof input.to!=='string'||input.to.length>100||typeof input.session!=='string'||input.session.length>64||typeof input.targetSession!=='string'||input.targetSession.length>64||!sdp||!['offer','answer'].includes(String(sdp.type))||typeof sdp.sdp!=='string'||sdp.sdp.length>16000)throw new HttpError(400,'Sinal de câmera inválido.');
+      command={type:'camera-signal',to:input.to,session:input.session,targetSession:input.targetSession,sdp:{type:sdp.type,sdp:sdp.sdp}};break;
+    }
     case 'chat':
       if (typeof input.text !== 'string' || input.text.length > 240) throw new HttpError(400, 'Escreva uma mensagem de até 240 caracteres.');
       command = { type: 'chat', text: input.text }; break;
@@ -135,7 +143,7 @@ export async function accessRoom(code: string, playerId: string, input?: Record<
       const sameDecision = !!decision && (command.type === 'respond' ? state.pending?.id === decision : command.type === 'run-response' ? state.runRequest?.id === decision : state.eleven?.id === decision);
       const manualAction=['pull','finish-vote'].includes(command.type)&&typeof command.matchId==='string';
       const sameManualMatch=manualAction&&command.matchId===state.matchId&&Number(input!.revision)<=state.revision;
-      conflict = !settled && ((manualAction&&!sameManualMatch) || (!!decision && !sameDecision) || (!['join', 'watch', 'chat', 'signal'].includes(command.type) && input!.revision !== state.revision && !sameManualMatch && !(sameDecision && Number(input!.revision) <= state.revision)));
+      conflict = !settled && ((manualAction&&!sameManualMatch) || (!!decision && !sameDecision) || (!['join', 'watch', 'chat', 'signal', 'camera', 'camera-signal'].includes(command.type) && input!.revision !== state.revision && !sameManualMatch && !(sameDecision && Number(input!.revision) <= state.revision)));
       if (!conflict) {
         try { if (!settled) state = applyCommand(state, playerId, command, now); }
         catch (error) { throw new HttpError(400, error instanceof Error ? error.message : 'Jogada inválida.'); }

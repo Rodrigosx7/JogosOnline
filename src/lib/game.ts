@@ -18,6 +18,9 @@ export type Room = {
   removedIds?: string[];
   runRequest?: { id: string; team: number; by: string; resumeSeat: number } | null;
   custom?: { config: CustomConfig; scoreMode: 'normal' | 'manual' };
+  cameras?: {playerId:string;session:string;at:number}[];
+  cameraSignals?: {id:string;from:string;to:string;session:string;targetSession:string;sdp:{type:string;sdp:string};at:number}[];
+  pullUntil?: number;
   finishVotes?: string[];
   matchId?:string;
   pullEvents?: { id: string; playerId: string; name: string; team: number; amount: number; before: number; after: number; at: number }[];
@@ -90,7 +93,7 @@ function startHand(r: Room, now: number, advanceDealer = false) {
 function award(r: Room, winner: number | null, amount: number, now: number, reason: string) {
   resolveDecision(r, r.pending?.id); resolveDecision(r, r.eleven?.id);
   log(r, reason);
-  if (r.custom?.scoreMode === 'manual') { startHand(r, now + (r.handNotice?.decision === 'run' && r.handNotice.at === now ? ELEVEN_NOTICE_MS : 0)); return; }
+  if (r.custom?.scoreMode === 'manual') { r.pullUntil = now + 5000; startHand(r, r.pullUntil); return; }
   let matchWon = false;
   if (winner !== null) {
     const result = scoreAfterWin(r.scores[winner], amount);
@@ -197,13 +200,31 @@ export function applyCommand(room: Room, playerId: string, command: any, now: nu
   } else {
     if (!p && spectator && command.type === 'chat') p = { ...spectator, seat: -1, ready: false };
     if (!p) fail('Entre na sala primeiro.');
+    if(command.type==='camera') {
+      if(typeof command.session!=='string'||command.session.length>64)fail('Sessão de câmera inválida.');
+      r.cameras=(r.cameras??[]).filter(c=>c.playerId!==playerId&&now-c.at<25000);
+      if(command.enabled)r.cameras.push({playerId,session:command.session,at:now});
+      r.socialRevision=(r.socialRevision??0)+1;return r;
+    }
+    if(command.type==='camera-signal') {
+      if(!r.cameras?.some(c=>c.playerId===playerId&&c.session===command.session&&now-c.at<25000)||!r.cameras.some(c=>c.playerId===command.to&&c.session===command.targetSession&&now-c.at<25000))fail('Câmera desconectada.');
+      r.cameraSignals=[...(r.cameraSignals??[]).filter(c=>now-c.at<30000).slice(-31),{id:randomUUID(),from:playerId,to:command.to,session:command.session,targetSession:command.targetSession,sdp:command.sdp,at:now}];
+      r.socialRevision=(r.socialRevision??0)+1;return r;
+    }
     if(command.type === 'pull' || command.type === 'finish-vote') {
       if(r.custom?.scoreMode !== 'manual' || r.status !== 'playing') fail('Disponível somente durante partidas personalizadas com tentos manuais.');
       if(command.type === 'pull') {
         const amount=command.amount,ownTeam=team(p.seat),before=r.scores[ownTeam];
         if(!Number.isInteger(amount)||amount===0||Math.abs(amount)>11||before+amount<0||before+amount>99)fail('Puxe ou devolva de 1 a 11 tentos. O placar vai de 0 a 99.');
         if(r.pullEvents?.some(e=>e.playerId===p!.id&&now-e.at<1000))fail('Aguarde a mão terminar de puxar antes de repetir.');
+        if(amount>0 && (!r.pullUntil || now>=r.pullUntil)) fail('Só pode puxar tentos nos 5 segundos após a rodada.');
         r.scores[ownTeam]+=amount;
+        if(now<(r.handStartedAt??0)){
+          const teams=[0,1].filter(t=>r.scores[t]===11);
+          r.eleven=teams.length?{id:randomUUID(),teams,accepted:teams.length===2?teams:[],forced:teams.length===2}:null;
+          r.stake=teams.length===2?5:3;
+        }
+        if(r.scores[ownTeam]>11){r.status='finished';r.winner=ownTeam;r.deadline=null;r.pending=null;r.transition=null;r.runRequest=null;r.botAction=null;log(r,`Equipe ${ownTeam+1} venceu a partida.`);}
         r.pullEvents=[...(r.pullEvents??[]).filter(e=>now-e.at<5000).slice(-7),{id:randomUUID(),playerId:p.id,name:p.name,team:ownTeam,amount,before,after:r.scores[ownTeam],at:now}];
         log(r,`${p.name} ${amount>0?'puxou':'devolveu'} ${Math.abs(amount)} tento(s).`);
       } else {
@@ -260,11 +281,12 @@ export function applyCommand(room: Room, playerId: string, command: any, now: nu
       if (r.rematchVotes.length === size(r)) {
         r.status = 'playing'; r.scores = [0, 0]; r.winner = null; r.handNumber = 0; r.history = [];
         r.rematchVotes = []; r.players.forEach(v => v.lastSeen = now); startHand(r, now, true);
-        r.finishVotes=[];r.pullEvents=[];r.matchId=randomUUID();
+        r.finishVotes=[];r.pullEvents=[];r.pullUntil=undefined;r.matchId=randomUUID();
       }
     } else {
       if (r.status !== 'playing') fail('A partida não está em andamento.');
       if (r.transition) fail('Aguarde o recolhimento das cartas.');
+      if(r.custom?.scoreMode==='manual'&&now<(r.handStartedAt??0))fail('Aguarde o início da próxima rodada.');
       if (command.type === 'run-response') {
         const request = r.runRequest;
         if (!request || request.team !== team(p.seat) || request.by === p.id) fail('Não há corrida para você decidir.');
@@ -345,6 +367,9 @@ export function applyCommand(room: Room, playerId: string, command: any, now: nu
 }
 export function reconcile(room: Room, now: number): Room {
   const r = clone(room);
+  if(r.status==='playing'&&r.custom?.scoreMode==='manual'&&r.scores.some(s=>s>11)){
+    r.status='finished';r.winner=r.scores[0]>=r.scores[1]?0:1;r.deadline=null;r.pending=null;r.transition=null;r.runRequest=null;r.botAction=null;r.revision++;
+  }
   const steps = [0, 3, 5, 7, 9, 11];
   const scores = r.scores.map(value => steps.findLast(score => score <= value) ?? 0);
   if (r.custom?.scoreMode !== 'manual' && scores.some((score, i) => score !== r.scores[i])) { r.scores = scores; r.revision++; }
@@ -392,7 +417,9 @@ export function playerView(room: Room, playerId: string, now: number): any {
   const watching = !!r.spectators?.some(v => v.id === playerId);
   return clone({ playerId, code: r.code, mode: r.mode, revision: r.revision, status: r.status,
     hostId: r.hostId ?? r.players[0]?.id, tableTheme: r.tableTheme ?? 'classic', isSpectator: watching,
-    custom:r.custom??null,matchId:r.matchId??null,finishVotes:r.finishVotes??[],pullEvents:(r.pullEvents??[]).filter(e=>now-e.at<4000),
+    cameras:(r.cameras??[]).filter(c=>now-c.at<25000&&r.players.some(p=>p.id===c.playerId)),
+    cameraSignals:(r.cameraSignals??[]).filter(c=>c.to===playerId&&now-c.at<30000),
+    pullUntil:r.pullUntil??null,custom:r.custom??null,matchId:r.matchId??null,finishVotes:r.finishVotes??[],pullEvents:(r.pullEvents??[]).filter(e=>now-e.at<4000),
     spectators: (r.spectators ?? []).map(({ id, name }) => ({ id, name })),
     runRequest: r.runRequest ?? null,
     players: r.players.map(({ id, name, seat, ready, isBot }) => ({ id, name, seat, ready, isBot: !!isBot, cardCount: r.hands[id]?.length ?? 0 })),

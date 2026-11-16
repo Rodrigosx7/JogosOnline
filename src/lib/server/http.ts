@@ -31,9 +31,9 @@ export function rateLimit(key: string, maximum: number) {
   if (!current || current.until <= now) { limits.set(key, { count: 1, until: now + 60_000 }); return; }
   if (++current.count > maximum) throw new HttpError(429, 'Muitas solicitações. Aguarde um minuto.');
 }
-export async function body(request: Request): Promise<Record<string, unknown>> {
+export async function body(request: Request, maxBytes = 4096): Promise<Record<string, unknown>> {
   if (!request.headers.get('content-type')?.includes('application/json')) throw new HttpError(415, 'Envie JSON.');
-  if (Number(request.headers.get('content-length')) > 4096) throw new HttpError(413, 'Solicitação muito grande.');
+  if (Number(request.headers.get('content-length')) > maxBytes) throw new HttpError(413, 'Solicitação muito grande.');
   const reader = request.body?.getReader();
   if (!reader) throw new HttpError(400, 'JSON inválido.');
   const chunks: Uint8Array[] = [];
@@ -42,7 +42,7 @@ export async function body(request: Request): Promise<Record<string, unknown>> {
     const { done, value } = await reader.read();
     if (done) break;
     size += value.byteLength;
-    if (size > 4096) { await reader.cancel(); throw new HttpError(413, 'Solicitação muito grande.'); }
+    if (size > maxBytes) { await reader.cancel(); throw new HttpError(413, 'Solicitação muito grande.'); }
     chunks.push(value);
   }
   const bytes = new Uint8Array(size);

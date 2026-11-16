@@ -562,24 +562,21 @@ test('spectators have no private cards, seats and kicks require lobby, host tran
   lobby=applyCommand(lobby,'a',{type:'leave'},0);assert.equal(lobby.hostId,'b');
 });
 
-test('manual custom scores can be pulled during any phase, preserve totals, never end on a hand win and require every player vote',()=>{
+test('manual pulls are limited to five seconds after the hand, returns remain free, and more than eleven finishes',()=>{
   let r=start();r.custom={config:defaultCustomConfig(),scoreMode:'manual'};
-  r=applyCommand(r,'p0',{type:'pull',amount:11},100);r=applyCommand(r,'p0',{type:'pull',amount:5},1200);
-  assert.deepEqual(r.scores,[16,0]);assert.equal(reconcile(r,1201).scores[0],16);assert.equal(r.status,'playing');
-  assert.throws(()=>applyCommand(r,'p0',{type:'pull',amount:1},1300));
-  r=applyCommand(r,'p0',{type:'pull',amount:-5},2300);assert.equal(r.scores[0],11);
-  r=applyCommand(r,'p1',{type:'pull',amount:3},2400);assert.deepEqual(r.scores,[11,3]);
-  r.currentSeat=0;r.stake=11;r=winHand(r);
-  assert.deepEqual(r.scores,[11,3]);assert.equal(r.status,'playing');assert.equal(r.eleven!.teams[0],0);
-  r=applyCommand(r,'p1',{type:'cap'},3000);assert.equal(r.stake,5);assert.equal(r.eleven!.forced,true);
-  const before=r.revision;r=applyCommand(r,'p0',{type:'finish-vote'},3100);assert.equal(r.status,'playing');assert.deepEqual(r.finishVotes,['p0']);
-  r=applyCommand(r,'p0',{type:'finish-vote'},3200);assert.deepEqual(r.finishVotes,[]);
-  r=applyCommand(r,'p0',{type:'finish-vote'},3300);r=applyCommand(r,'p1',{type:'finish-vote'},3400);assert.equal(r.status,'finished');assert.equal(r.winner,0);assert.ok(r.revision>before);
+  assert.throws(()=>applyCommand(r,'p0',{type:'pull',amount:3},100));
+  r.pullUntil=6000;r.handStartedAt=6000;
+  r=applyCommand(r,'p0',{type:'pull',amount:11},1000);assert.equal(r.status,'playing');
+  assert.throws(()=>applyCommand(r,'p0',{type:'pull',amount:1},6000));
+  r=applyCommand(r,'p0',{type:'pull',amount:-1},9000);assert.equal(r.scores[0],10);
+  r.pullUntil=16000;r.handStartedAt=16000;
+  r=applyCommand(r,'p0',{type:'pull',amount:3},11000);
+  assert.equal(r.status,'finished');assert.equal(r.winner,0);assert.equal(r.deadline,null);
 });
 
 test('manual scores only affect own team; normal rooms and spectators cannot pull or vote',()=>{
   const regular=start('2x2');assert.throws(()=>applyCommand(regular,'p0',{type:'pull',amount:3},100));assert.throws(()=>applyCommand(regular,'p0',{type:'finish-vote'},100));
-  let r=structuredClone(regular);r.custom={config:defaultCustomConfig(),scoreMode:'manual'};
+  let r=structuredClone(regular);r.custom={config:defaultCustomConfig(),scoreMode:'manual'};r.pullUntil=5000;
   r=applyCommand(r,'p2',{type:'pull',amount:7,team:1},100);assert.deepEqual(r.scores,[7,0]);
   for(const amount of [0,12,-8,1.5,'3'])assert.throws(()=>applyCommand(r,'p0',{type:'pull',amount},2000));
   r=applyCommand(r,'viewer',{type:'watch',name:'Visitante'},1000);assert.throws(()=>applyCommand(r,'viewer',{type:'pull',amount:3},2000));assert.throws(()=>applyCommand(r,'viewer',{type:'finish-vote'},2000));
@@ -592,4 +589,24 @@ test('manual custom mode keeps eleven-eleven and illegal truco from ending befor
   r=applyCommand(r,'p0',{type:'raise'},100);assert.equal(r.status,'playing');assert.deepEqual(r.scores,[11,11]);assert.equal(r.eleven!.forced,true);
   r.currentSeat=0;r=winHand(r);assert.equal(r.status,'playing');assert.deepEqual(r.scores,[11,11]);
   r=applyCommand(r,'p0',{type:'finish-vote'},1000);r=applyCommand(r,'p1',{type:'finish-vote'},1000);assert.equal(r.status,'finished');assert.equal(r.winner,null);
+});
+
+test('manual hand completion opens exactly five seconds and pauses the next hand',()=>{
+ let r=start();r.custom={config:defaultCustomConfig(),scoreMode:'manual'};r=winHand(r);
+ assert.equal(r.pullUntil,r.handStartedAt);assert.ok(r.pullUntil);
+ const at=r.pullUntil!-1;
+ assert.equal(playerView(r,'p0',at).legal.play,false);
+ assert.doesNotThrow(()=>applyCommand(r,'p0',{type:'pull',amount:3},at));
+ assert.throws(()=>applyCommand(r,'p0',{type:'pull',amount:3},r.pullUntil!));
+});
+test('camera negotiation is private to its recipient and does not invalidate a turn',()=>{
+ let r=start();const revision=r.revision;
+ r=applyCommand(r,'p0',{type:'camera',session:'session-a',enabled:true},100);
+ r=applyCommand(r,'p1',{type:'camera',session:'session-b',enabled:true},100);
+ const offer={type:'camera-signal',session:'session-a',targetSession:'session-b',to:'p1',sdp:{type:'offer',sdp:'test'}};
+ r=applyCommand(r,'p0',offer,200);
+ assert.equal(r.revision,revision);assert.equal(playerView(r,'p0',200).cameraSignals.length,0);assert.equal(playerView(r,'p1',200).cameraSignals.length,1);
+ assert.throws(()=>applyCommand(r,'outsider',offer,300));
+ r=applyCommand(r,'p1',{type:'camera',session:'session-b',enabled:false},300);
+ assert.throws(()=>applyCommand(r,'p0',offer,400));
 });
