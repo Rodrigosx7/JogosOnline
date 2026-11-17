@@ -512,3 +512,14 @@
  .seat-3.seats-4 .seat-camera{left:auto;right:0;transform:none}
  .table-wrap:has(.seat-0 .seat-camera){padding-bottom:210px}
 }
+
+/* Desktop: use the viewport for the table while reserving room for seats and cameras. */
+@media (min-width:1001px){
+ .room-is-playing .room-main{padding:4px 24px 24px}
+ .room-is-playing .table-wrap{max-width:none;padding-bottom:140px}
+ .room-is-playing .table-hud{margin-bottom:32px}
+ .room-is-playing .table-wrap:has(.seat-camera) .table-hud{margin-bottom:76px}
+ .room-is-playing .table-wrap:has(.seat-0 .seat-camera){padding-bottom:140px}
+ .room-is-playing .felt-table,.room-is-playing.theme-skol .felt-table{width:min(calc(100% - 300px),clamp(400px,calc(100dvh - 315px),760px));height:auto;aspect-ratio:1}
+ .room-is-playing .game-sidebar{margin-top:12px}
+}
