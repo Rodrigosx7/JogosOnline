@@ -611,6 +611,17 @@ test('camera negotiation is private to its recipient and does not invalidate a t
  assert.throws(()=>applyCommand(r,'p0',offer,400));
 });
 
+test('spectators can receive camera signaling and old sessions cannot disconnect newer ones',()=>{
+ let r=start();r.spectators=[{id:'viewer',name:'Visitante',lastSeen:100}];
+ r=applyCommand(r,'viewer',{type:'camera',session:'old',enabled:true},100);
+ r=applyCommand(r,'viewer',{type:'camera',session:'new',enabled:true},101);
+ r=applyCommand(r,'viewer',{type:'camera',session:'old',enabled:false},102);
+ r=applyCommand(r,'p0',{type:'camera',session:'sender',enabled:true},103);
+ r=applyCommand(r,'p0',{type:'camera-signal',session:'sender',targetSession:'new',to:'viewer',sdp:{type:'offer',sdp:'test'}},104);
+ assert.equal(playerView(r,'viewer',104).cameraSignals.length,1);
+ assert.equal(playerView(r,'p0',104).cameras.some((c:{playerId:string;session:string})=>c.playerId==='viewer'&&c.session==='new'),true);
+});
+
 test('all eight text reactions use table signals without creating chat messages',()=>{
  for(let index=0;index<8;index++){
   let r=start('2x2');const revision=r.revision;

@@ -187,7 +187,7 @@ export function applyCommand(room: Room, playerId: string, command: any, now: nu
     if (r.hostId === target) r.hostId = r.players.find(v => !v.isBot)?.id ?? r.spectators[0]?.id;
     r.revision++; return r;
   }
-  if (spectator && command.type !== 'join' && command.type !== 'seat' && command.type !== 'chat') fail('Espectadores só podem assistir e conversar.');
+  if (spectator && command.type !== 'join' && command.type !== 'seat' && command.type !== 'chat' && command.type !== 'camera' && command.type !== 'camera-signal') fail('Espectadores só podem assistir e conversar.');
   if (spectator && command.type === 'seat') command = { ...command, type: 'join', name: spectator.name };
   if (command.type === 'join') {
     if (p) return r;
@@ -200,11 +200,11 @@ export function applyCommand(room: Room, playerId: string, command: any, now: nu
     r.spectators = (r.spectators ?? []).filter(v => v.id !== playerId);
     r.hostId ??= playerId;
   } else {
-    if (!p && spectator && command.type === 'chat') p = { ...spectator, seat: -1, ready: false };
+    if (!p && spectator && ['chat','camera','camera-signal'].includes(command.type)) p = { ...spectator, seat: -1, ready: false };
     if (!p) fail('Entre na sala primeiro.');
     if(command.type==='camera') {
       if(typeof command.session!=='string'||command.session.length>64)fail('Sessão de câmera inválida.');
-      r.cameras=(r.cameras??[]).filter(c=>c.playerId!==playerId&&now-c.at<25000);
+      r.cameras=(r.cameras??[]).filter(c=>now-c.at<25000&&(c.playerId!==playerId||(!command.enabled&&c.session!==command.session)));
       if(command.enabled)r.cameras.push({playerId,session:command.session,at:now});
       r.socialRevision=(r.socialRevision??0)+1;return r;
     }
@@ -424,7 +424,7 @@ export function playerView(room: Room, playerId: string, now: number): any {
   const watching = !!r.spectators?.some(v => v.id === playerId);
   return clone({ playerId, code: r.code, mode: r.mode, revision: r.revision, status: r.status,
     hostId: r.hostId ?? r.players[0]?.id, tableTheme: r.tableTheme ?? 'classic', isSpectator: watching,
-    cameras:(r.cameras??[]).filter(c=>now-c.at<25000&&r.players.some(p=>p.id===c.playerId)),
+    cameras:(r.cameras??[]).filter(c=>now-c.at<25000&&(r.players.some(p=>p.id===c.playerId)||r.spectators?.some(p=>p.id===c.playerId))),
     cameraSignals:(r.cameraSignals??[]).filter(c=>c.to===playerId&&now-c.at<30000),
     pullRemaining:p&&now<(r.pullUntil??0)?Math.max(0,(r.pullLimit??0)-(r.pullUsed?.[team(p.seat)]??0)):0,
     pullUntil:r.pullUntil??null,custom:r.custom??null,matchId:r.matchId??null,finishVotes:r.finishVotes??[],pullEvents:(r.pullEvents??[]).filter(e=>now-e.at<4000),
