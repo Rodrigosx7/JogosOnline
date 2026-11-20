@@ -12,7 +12,7 @@ for(const mode of ['1x1','2x2']) test(`partida completa ${mode}, privacidade e r
  let state=await view(0);expect(state.status).toBe('playing');expect(state.stake).toBe(3);
  const all=await Promise.all(api.map((_,i)=>view(i)));const ids=all.flatMap(v=>v.hand.map((c:any)=>c.id));expect(new Set(ids).size).toBe(count*3);
  for(const v of all){expect(v.hand).toHaveLength(3);expect(v.deck).toBeUndefined();expect(v.hands).toBeUndefined();expect(v.players.every((p:any)=>!p.hand)).toBeTruthy();}
- const page=await contexts[0].newPage();await page.goto(`${base}/room/${code}`);await expect(page.locator('body')).toContainText('Truco');await page.screenshot({path:`test-results/mesa-${mode}.png`,fullPage:true});
+ const page=await contexts[0].newPage();await page.goto(`${base}/room/${code}`);await expect(page.locator('body')).toContainText(/truco/i);await page.screenshot({path:`test-results/mesa-${mode}.png`,fullPage:true});
  for(let step=0;step<200&&state.status==='playing';step++){
   if(state.collecting){await new Promise(resolve=>setTimeout(resolve,Math.max(0,state.tableUntil-Date.now())+75));state=await view(0);if(state.status!=='playing')break;}
   if(state.eleven?.deciding){const team=state.eleven.teams.find((t:number)=>!state.eleven.accepted.includes(t));const index=all.findIndex(v=>v.players.find((p:any)=>p.id===v.playerId).seat%2===team);state=await cmd(index,{type:'eleven',answer:'play'});continue;}
@@ -20,7 +20,9 @@ for(const mode of ['1x1','2x2']) test(`partida completa ${mode}, privacidade e r
   expect(index).toBeGreaterThanOrEqual(0);const mine=await view(index);expect(mine.hand.length).toBeGreaterThan(0);state=await cmd(index,{type:'play',cardId:mine.hand[0].id,covered:false},mine);
  }
  expect(state.status).toBe('finished');expect(state.scores[state.winner]).toBe(11); expect(state.scores.every((score: number) => [0, 3, 5, 7, 9, 11].includes(score))).toBeTruthy();
- await expect(page.getByRole('heading',{name:'Boa partida. Mais uma?',exact:true})).toBeVisible({timeout:10000});expect(await page.getByTestId('table-card').count()).toBeGreaterThan(0);
+ await expect(page.getByRole('heading',{name:'Boa partida. Mais uma?',exact:true})).toBeVisible({timeout:10000});
+ // The finished table shows the result panel instead of the last trick's cards.
+ await expect(page.getByTestId('hand-card')).toHaveCount(0);
  for(let i=0;i<count;i++)expect((await view(i)).scores).toEqual(state.scores);
  for(let i=0;i<count;i++)await cmd(i,{type:'rematch'});state=await view(0);expect(state.status).toBe('playing');expect(state.scores).toEqual([0,0]);
  await Promise.all(contexts.map(c=>c.close()));

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRoom, applyCommand, reconcile, playerView, makeDeck, cardStrength, type Room, type Card } from './game';
 import {defaultCustomConfig} from './custom-mode';
+import { SIGNAL_DURATION_MS } from './social';
 
 const card = (rank: string, suit = 'diamonds'): Card => ({ id: `${rank}-${suit}`, rank, suit });
 function start(mode: '1x1' | '2x2' = '1x1'): Room {
@@ -89,8 +90,8 @@ test('signals are visible to the whole table, expire, reject spam and exclude ou
   assert.deepEqual(playerView(r, 'p1', 1001).signals, [signal]); assert.deepEqual(playerView(r, 'p3', 1001).signals, [signal]);
   assert.deepEqual(playerView(r, 'outsider', 1001).signals, []);
   assert.equal(JSON.stringify(playerView(r, 'p1', 1001)).includes(signal.id), true);
-  assert.deepEqual(playerView(r, 'p2', 1999).signals, [signal]);
-  assert.deepEqual(playerView(r, 'p2', 2000).signals, []);
+  assert.deepEqual(playerView(r, 'p2', 999 + SIGNAL_DURATION_MS).signals, [signal]);
+  assert.deepEqual(playerView(r, 'p2', 1000 + SIGNAL_DURATION_MS).signals, []);
   assert.throws(() => action(r, { type: 'signal', kind: 'weak' }, 2000, 0));
   assert.throws(() => action(r, { type: 'signal', kind: 'unknown' }, 4000, 0));
   assert.throws(() => action(start(), { type: 'signal', kind: 'zap' }, 1000, 0));
@@ -647,4 +648,18 @@ test('manual pull budget follows the completed hand and is shared by partners',(
   r=applyCommand(r,'p0',{type:'pull',amount:-1},r.pullUntil!+10000);
   assert.equal(r.scores[0],stake-1);
  }
+});
+
+test('a vote from someone who left never starts a rematch, and an empty seat cancels instead of crashing', () => {
+  let r = start('1x1');
+  r = { ...r, status: 'finished', winner: 0 };
+  r = applyCommand(r, 'p0', { type: 'rematch' }, 1);
+  r = applyCommand(r, 'p0', { type: 'leave' }, 2);
+  assert.deepEqual(r.rematchVotes, []);
+  r = applyCommand(r, 'p1', { type: 'rematch' }, 3);
+  assert.equal(r.status, 'finished');
+  // Rooms already broken by the old bug are cancelled on the next access.
+  const broken: Room = { ...start('1x1'), players: start('1x1').players.filter(p => p.id === 'p1') };
+  const fixed = reconcile(broken, 40_000);
+  assert.equal(fixed.status, 'cancelled');
 });

@@ -4,7 +4,7 @@ import { applyCommand, type Room } from '../src/lib/game';
 
 const origin = process.env.TRUCO_TEST_URL || 'http://localhost:3000';
 for (const mode of ['1x1', '2x2'] as const) test(`mão de 11 ${mode}: sigilo, decisões e derrota por truco`, async ({ browser }) => {
-  test.skip(!/localhost:3002/.test(origin), 'Fixture isolada apenas no servidor local de testes.');
+  test.skip(!origin.includes('localhost:3002'), 'Fixture isolada apenas no servidor local de testes.');
   const contexts: BrowserContext[] = [];
   try {
     for (let i = 0; i < (mode === '1x1' ? 2 : 4); i++) contexts.push(await browser.newContext());

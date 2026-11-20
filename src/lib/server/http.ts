@@ -23,6 +23,11 @@ export function sameOrigin(request: Request) {
     if (!target.hostname || source.host !== target.host) reject();
   } catch { reject(); }
 }
+// The platform proxy sets these; take only its first hop so every route keys limits the same way.
+export function clientIp(headers: Headers) {
+  const value = headers.get('x-real-ip') ?? headers.get('x-forwarded-for')?.split(',')[0];
+  return value?.trim().slice(0, 64) || 'local';
+}
 const limits = new Map<string, { count: number; until: number }>();
 export function rateLimit(key: string, maximum: number) {
   const now = Date.now();
@@ -59,4 +64,23 @@ export function name(value: unknown): string {
   if (normalized.length < 2 || normalized.length > 24 || /[\x00-\x1f\x7f]/.test(normalized))
     throw new HttpError(400, 'Use um nome de 2 a 24 caracteres.');
   return normalized;
+}
+
+// Abuse-sensitive limits (login, sign-up, room creation) are shared by every instance through
+// Postgres. The in-memory check runs first so a burst never even reaches the database.
+export async function sharedRateLimit(key: string, maximum: number) {
+  rateLimit(key, maximum);
+  const url = process.env.SUPABASE_URL, secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !secret) return;
+  let allowed = true;
+  try {
+    const response = await fetch(`${url}/rest/v1/rpc/rate_limit_hit`, {
+      method: 'POST', cache: 'no-store', signal: AbortSignal.timeout(3000),
+      headers: { apikey: secret, Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_key: key.slice(0, 200), p_max: maximum, p_window_seconds: 60 }),
+    });
+    // Fail open when the limiter itself is unavailable; the per-instance limit above still applies.
+    if (response.ok) allowed = (await response.json()) !== false;
+  } catch { /* limiter unavailable */ }
+  if (!allowed) throw new HttpError(429, 'Muitas solicitações. Aguarde um minuto.');
 }

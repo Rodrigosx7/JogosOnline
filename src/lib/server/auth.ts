@@ -1,9 +1,11 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { cookies } from 'next/headers';
+import { cookies, headers as requestHeaders } from 'next/headers';
+import { clientIp, rateLimit,sharedRateLimit } from './http';
 import { cloudConfigured } from './storage';
 import { signSession, verifySession } from './session';
+import { verifySupabaseToken } from './jwt';
 
 let secret: Promise<Buffer> | undefined;
 function localSecret() {
@@ -35,6 +37,8 @@ export async function identity(): Promise<string> {
   const headers = { apikey: process.env.SUPABASE_ANON_KEY!, 'Content-Type': 'application/json' };
   const access = jar.get('mesa_access')?.value;
   if (access) {
+    const local = await verifySupabaseToken(access, url);
+    if (local) return local;
     const result = await fetch(`${url}/auth/v1/user`, { headers: { ...headers, Authorization: `Bearer ${access}` }, cache: 'no-store' });
     if (result.ok) { const user = await result.json(); if (user.id) return user.id; }
   }
@@ -42,6 +46,8 @@ export async function identity(): Promise<string> {
   let result = refresh ? await fetch(`${url}/auth/v1/token?grant_type=refresh_token`, {
     method: 'POST', headers, body: JSON.stringify({ refresh_token: refresh }), cache: 'no-store',
   }) : null;
+  // Each new anonymous identity resets per-player limits, so creating them is limited per address.
+  if (!result?.ok) await sharedRateLimit(`signup:${clientIp(await requestHeaders())}`, 20);
   if (!result?.ok) result = await fetch(`${url}/auth/v1/signup`, { method: 'POST', headers, body: '{}', cache: 'no-store' });
   if (!result.ok) throw new Error('Anonymous authentication unavailable');
   const session = await result.json();

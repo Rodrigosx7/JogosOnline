@@ -14,8 +14,8 @@ function validateCommand(value: unknown): Command {
   let command: Record<string, unknown>;
   switch (input.type) {
     case 'camera':
-      if(typeof input.enabled!=='boolean'||typeof input.session!=='string'||!/^[a-zA-Z0-9-]{1,64}$/.test(input.session))throw new HttpError(400,'Câmera inválida.');
-      command={type:'camera',enabled:input.enabled,session:input.session};break;
+      if(typeof input.enabled!=='boolean'||typeof input.session!=='string'||!/^[a-zA-Z0-9-]{1,64}$/.test(input.session)||(input.live!==undefined&&typeof input.live!=='boolean'))throw new HttpError(400,'Câmera inválida.');
+      command={type:'camera',enabled:input.enabled,session:input.session,live:input.live!==false};break;
     case 'camera-signal': {
       const sdp=input.sdp as {type?:unknown;sdp?:unknown}|null;
       if(typeof input.to!=='string'||input.to.length>100||typeof input.session!=='string'||input.session.length>64||typeof input.targetSession!=='string'||input.targetSession.length>64||!sdp||!['offer','answer'].includes(String(sdp.type))||typeof sdp.sdp!=='string'||sdp.sdp.length>16000)throw new HttpError(400,'Sinal de câmera inválido.');
@@ -30,7 +30,8 @@ function validateCommand(value: unknown): Command {
     case 'join': command = { type: 'join', name: name(input.name) }; break;
     case 'pull':
       if(!Number.isInteger(input.amount)||!Number(input.amount)||Math.abs(Number(input.amount))>11)throw new HttpError(400,'Quantidade de tentos inválida.');
-      command={type:'pull',amount:input.amount};break;
+      if(input.pullWindow!==undefined&&!Number.isSafeInteger(input.pullWindow))throw new HttpError(400,'Rodada inválida.');
+      command={type:'pull',amount:input.amount,...(input.pullWindow!==undefined?{pullWindow:input.pullWindow}:{})};break;
     case 'finish-vote':
       if(input.vote!==undefined&&typeof input.vote!=='boolean')throw new HttpError(400,'Voto inválido.');
       command={type:'finish-vote',vote:input.vote};break;
@@ -74,6 +75,10 @@ function member(room: Room, playerId: string) { return room.players.some(player 
 function publicView(room: Room, playerId: string, now: number) {
   return { ...playerView(room, playerId, now), playerId, sync: cloudConfigured() && !room.spectators?.some(p => p.id === playerId) ? 'realtime' : 'polling' };
 }
+export function viewKey(view: { revision: number; socialRevision: number; cameras?: unknown[]; signals?: unknown[]; pullEvents?: unknown[]; handNotice?: unknown; teamDecisions?: unknown[]; legal?: unknown; pullRemaining?: number }) {
+  // Time-filtered fields expire without a revision change; include their sizes so expiry is noticed.
+  return `${view.revision}:${view.socialRevision}:${view.cameras?.length ?? 0}:${view.signals?.length ?? 0}:${view.pullEvents?.length ?? 0}:${view.handNotice ? 1 : 0}:${view.teamDecisions?.length ?? 0}:${view.pullRemaining ?? 0}:${JSON.stringify(view.legal ?? null)}`;
+}
 function heartbeat(room: Room, playerId: string, now: number) {
   const player = room.players.find(player => player.id === playerId) ?? room.spectators?.find(player => player.id === playerId);
   if (player) player.lastSeen = now;
@@ -112,14 +117,24 @@ export async function newRoom(playerId: string, input: Record<string, unknown>, 
 }
 
 export async function openRooms(store: RoomStore = roomStore(), now = Date.now()) {
-  const rooms = await store.listOpen();
+  const rooms = await store.listOpen('truco');
   const host = (room: Room) => [...room.players, ...(room.spectators ?? [])].find(p => p.id === room.hostId) ?? room.players[0];
   return rooms.filter(room => (!('game' in room) || room.game === 'truco') && room.listed && room.status === 'waiting' && !room.players.some(p => p.isBot) && room.players.length < (room.mode === '2x2' ? 4 : 2) && host(room)?.lastSeen > now - 90_000)
     .sort((a, b) => host(b).lastSeen - host(a).lastSeen).slice(0, 20)
     .map(room => ({ code: room.code, mode: room.mode, host: host(room).name, players: room.players.length, capacity: room.mode === '2x2' ? 4 : 2,...(room.custom?{customName:room.custom.config.name,scoreMode:room.custom.scoreMode}:{}) }));
 }
 
-export async function accessRoom(code: string, playerId: string, input?: Record<string, unknown>, store: RoomStore = roomStore()) {
+// Read-only membership check: assets and event streams must not rewrite the room.
+export async function readRoom(code: string, playerId: string, store: RoomStore = roomStore()) {
+  if (!/^[A-Za-z0-9_-]{18,64}$/.test(code)) throw new HttpError(404, 'Mesa não encontrada.');
+  const stored = await store.get<Room>(code);
+  if (!stored || ('game' in stored.document.state && stored.document.state.game !== 'truco')) throw new HttpError(404, 'Mesa não encontrada.');
+  const state = stored.document.state;
+  if (state.removedIds?.includes(playerId) || !member(state, playerId)) throw new HttpError(403, 'Entre na mesa pelo convite para continuar.');
+  return state;
+}
+
+export async function accessRoom(code: string, playerId: string, input?: Record<string, unknown>, store: RoomStore = roomStore(), known?: string | null) {
   if (!/^[A-Za-z0-9_-]{18,64}$/.test(code)) throw new HttpError(404, 'Mesa não encontrada.');
   const command = input ? validateCommand(input.command) : undefined;
   if (input && (!Number.isSafeInteger(input.revision) || Number(input.revision) < 0 || typeof input.requestId !== 'string' || !/^[A-Za-z0-9_-]{8,100}$/.test(input.requestId)))
@@ -142,7 +157,9 @@ export async function accessRoom(code: string, playerId: string, input?: Record<
       const settled = !!decision && (state.resolvedDecisions ?? []).includes(decision);
       const sameDecision = !!decision && (command.type === 'respond' ? state.pending?.id === decision : command.type === 'run-response' ? state.runRequest?.id === decision : state.eleven?.id === decision);
       const manualAction=['pull','finish-vote'].includes(command.type)&&typeof command.matchId==='string';
-      const sameManualMatch=manualAction&&command.matchId===state.matchId&&Number(input!.revision)<=state.revision;
+      // Taking points must name the payout window it belongs to; returning points never expires.
+      const staleWindow=command.type==='pull'&&Number(command.amount)>0&&command.pullWindow!==state.pullUntil;
+      const sameManualMatch=manualAction&&!staleWindow&&command.matchId===state.matchId&&Number(input!.revision)<=state.revision;
       conflict = !settled && ((manualAction&&!sameManualMatch) || (!!decision && !sameDecision) || (!['join', 'watch', 'chat', 'signal', 'camera', 'camera-signal'].includes(command.type) && input!.revision !== state.revision && !sameManualMatch && !(sameDecision && Number(input!.revision) <= state.revision)));
       if (!conflict) {
         try { if (!settled) state = applyCommand(state, playerId, command, now); }
@@ -150,10 +167,18 @@ export async function accessRoom(code: string, playerId: string, input?: Record<
         requests[playerId] = [...(requests[playerId] ?? []).slice(-127), input!.requestId as string];
       }
     }
-    heartbeat(state, playerId, now);
     state = advanceBot(state, now);
-    if (await store.compareAndSwap(code, stored.version, { state, requests }))
-      return { status: conflict ? 409 : 200, view: publicView(state, playerId, now) };
+    const seen = [...state.players, ...(state.spectators ?? [])].find(p => p.id === playerId)?.lastSeen ?? 0;
+    // Plain reads only write when the game moved or presence is getting stale (absence is 90 s).
+    const write = !!input || now - seen > 20_000 || JSON.stringify(state) !== JSON.stringify(stored.document.state);
+    if (write) heartbeat(state, playerId, now);
+    if (!write || await store.compareAndSwap(code, stored.version, { state, requests }))
+    {
+      const view = publicView(state, playerId, now);
+      // Polling clients send what they already have; skip the full view when nothing changed.
+      if (!input && known && known === viewKey(view)) return { status: 200, view: { unchanged: true, revision: view.revision, socialRevision: view.socialRevision, serverTime: now } };
+      return { status: conflict ? 409 : 200, view };
+    }
   }
   throw new HttpError(409, 'A mesa recebeu muitas jogadas. Atualize para continuar.');
 }

@@ -1,4 +1,6 @@
-import { randomBytes, randomUUID,createHmac, scryptSync, timingSafeEqual } from 'node:crypto';
+import { randomBytes, randomUUID,createHmac, scrypt, scryptSync, timingSafeEqual } from 'node:crypto';
+import { promisify } from 'node:util';
+const scryptAsync = promisify(scrypt) as (password: string, salt: string, length: number) => Promise<Buffer>;
 import { cookies } from 'next/headers';
 import { HttpError } from './http';
 import {loadAdminCredentials,saveAdminCredentials} from './custom-store';
@@ -14,6 +16,14 @@ export function verifyAdminPassword(username:string,password:string,passwordHash
   const valid=safeEqual(scryptSync(password,salt,64),Buffer.from(hash,'hex'));
   return valid && safeEqual(Buffer.from(username),Buffer.from(process.env.ADMIN_USERNAME!));
 }
+// Same check without blocking the event loop for every other room on this instance.
+export async function verifyAdminPasswordAsync(username:string,password:string,passwordHash=process.env.ADMIN_PASSWORD_HASH) {
+  if(!adminConfigured() || username.length>64 || password.length>256) return false;
+  const [salt,hash]=(passwordHash??'').split(':');
+  if(!salt||!hash||!/^[a-f0-9]{128}$/.test(hash)) return false;
+  const valid=safeEqual(await scryptAsync(password,salt,64),Buffer.from(hash,'hex'));
+  return valid && safeEqual(Buffer.from(username),Buffer.from(process.env.ADMIN_USERNAME!));
+}
 function signature(value:string) { return createHmac('sha256',process.env.ADMIN_SESSION_SECRET!).update(value).digest('base64url'); }
 export function verifyAdminSession(token:string|undefined,now=Date.now(),expectedVersion='initial') {
   if(!adminConfigured() || !token || token.length>300) return false;
@@ -21,7 +31,7 @@ export function verifyAdminSession(token:string|undefined,now=Date.now(),expecte
   const [expires,nonce]=parts,version=parts.length===4?parts[2]:'initial',mac=parts.at(-1),payload=parts.slice(0,-1).join('.');
   return version===expectedVersion && !!nonce && /^\d+$/.test(expires) && Number(expires)>now && Number(expires)<=now+8*60*60*1000 && !!mac && safeEqual(Buffer.from(mac),Buffer.from(signature(payload)));
 }
-export async function authenticateAdmin(username:string,password:string){const record=await loadAdminCredentials();return verifyAdminPassword(username,password,record.passwordHash)?record:null;}
+export async function authenticateAdmin(username:string,password:string){const record=await loadAdminCredentials();return await verifyAdminPasswordAsync(username,password,record.passwordHash)?record:null;}
 export async function adminLoggedIn() {const token=(await cookies()).get(cookieName)?.value;if(!token||!adminConfigured())return false;return verifyAdminSession(token,Date.now(),(await loadAdminCredentials()).version);}
 export async function requireAdmin() { if(!await adminLoggedIn()) throw new HttpError(401,'Entre como administrador.'); }
 export async function setAdminSession(version?:string) {
@@ -34,9 +44,9 @@ export async function changeAdminPassword(currentPassword:string,newPassword:str
   if(newPassword.trim().length<10||newPassword.length>128)throw new HttpError(400,'Use uma frase ou senha com 10 a 128 caracteres.');
   return serialized('admin-password-change',async()=>{
     const current=await loadAdminCredentials();
-    if(!verifyAdminPassword(process.env.ADMIN_USERNAME??'',currentPassword,current.passwordHash))throw new HttpError(400,'A senha atual não confere.');
-    if(verifyAdminPassword(process.env.ADMIN_USERNAME??'',newPassword,current.passwordHash))throw new HttpError(400,'Escolha uma senha diferente da atual.');
-    const salt=randomBytes(16).toString('hex'),record={passwordHash:`${salt}:${scryptSync(newPassword,salt,64).toString('hex')}`,version:randomUUID()};
+    if(!await verifyAdminPasswordAsync(process.env.ADMIN_USERNAME??'',currentPassword,current.passwordHash))throw new HttpError(400,'A senha atual não confere.');
+    if(await verifyAdminPasswordAsync(process.env.ADMIN_USERNAME??'',newPassword,current.passwordHash))throw new HttpError(400,'Escolha uma senha diferente da atual.');
+    const salt=randomBytes(16).toString('hex'),record={passwordHash:`${salt}:${(await scryptAsync(newPassword,salt,64)).toString('hex')}`,version:randomUUID()};
     await saveAdminCredentials(record);return record.version;
   });
 }

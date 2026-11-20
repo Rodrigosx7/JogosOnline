@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { identity } from '@/lib/server/auth';
 import { failure, rateLimit } from '@/lib/server/http';
-import { accessRoom } from '@/lib/server/rooms';
+import { readRoom } from '@/lib/server/rooms';
 import { cloudConfigured } from '@/lib/server/storage';
 
 export const runtime = 'nodejs';
@@ -13,7 +13,7 @@ export async function GET(request: Request, context: { params: Promise<{ code: s
     rateLimit(`events:${playerId}`, 30);
     const { code } = await context.params;
     // Verify membership before constructing a subscription with server credentials.
-    await accessRoom(code, playerId);
+    await readRoom(code, playerId);
     if (!cloudConfigured()) return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
     const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
@@ -30,8 +30,8 @@ export async function GET(request: Request, context: { params: Promise<{ code: s
           event: 'UPDATE', schema: 'public', table: 'game_revisions', filter: `code=eq.${code}`,
         }, event => {
           // Never forward the database payload, even though this table is sanitized.
-          const revision = event.new.revision;
-          if (Number.isSafeInteger(revision)) send(`data: ${JSON.stringify({ revision })}\n\n`);
+          const { revision, social_revision: socialRevision } = event.new;
+          if (Number.isSafeInteger(revision)) send(`data: ${JSON.stringify({ revision, socialRevision: Number.isSafeInteger(socialRevision) ? socialRevision : null })}\n\n`);
         });
         cleanup = () => {
           if (stopped) return;

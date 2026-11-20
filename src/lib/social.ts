@@ -1,4 +1,5 @@
-export const SIGNAL_DURATION_MS = 1000;
+// Long enough to survive one slow poll (750 ms) plus network delay; still short and transient.
+export const SIGNAL_DURATION_MS = 2000;
 export const SIGNAL_OPTIONS = [
   { kind: 'zap', label: 'Zap', emoji: '😉' },
   { kind: 'copeta', label: 'Copeta', emoji: '😏' },

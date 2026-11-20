@@ -1,0 +1,12 @@
+{
+  "case": "delayed pull from previous hand",
+  "expected": "reject previous hand",
+  "actualStatus": 200,
+  "appliedToHand": 2,
+  "scores": [
+    3,
+    0
+  ],
+  "oldRevision": 4,
+  "newRevision": 9
+}

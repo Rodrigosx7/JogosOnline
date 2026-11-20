@@ -1,0 +1,146 @@
+[
+  {
+    "game": "truco",
+    "phase": "lobby",
+    "width": 1440,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "truco",
+    "phase": "lobby",
+    "width": 390,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "truco",
+    "phase": "lobby",
+    "width": 320,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "truco",
+    "phase": "playing",
+    "width": 1440,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "truco",
+    "phase": "playing",
+    "width": 390,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "truco",
+    "phase": "playing",
+    "width": 320,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "domino",
+    "phase": "lobby",
+    "width": 1440,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "domino",
+    "phase": "lobby",
+    "width": 390,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "domino",
+    "phase": "lobby",
+    "width": 320,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "domino",
+    "phase": "playing",
+    "width": 1440,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "domino",
+    "phase": "playing",
+    "width": 390,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "domino",
+    "phase": "playing",
+    "width": 320,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "sinuca",
+    "phase": "lobby",
+    "width": 1440,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "sinuca",
+    "phase": "lobby",
+    "width": 390,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "sinuca",
+    "phase": "lobby",
+    "width": 320,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "sinuca",
+    "phase": "playing",
+    "width": 1440,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "sinuca",
+    "phase": "playing",
+    "width": 390,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  },
+  {
+    "game": "sinuca",
+    "phase": "playing",
+    "width": 320,
+    "overflow": false,
+    "offscreen": [],
+    "errors": []
+  }
+]

@@ -1,5 +1,5 @@
 import {test,expect,type BrowserContext} from '@playwright/test';
-import {readFileSync,existsSync} from 'node:fs';
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
 import {makeDeck} from '../src/lib/truco-rules';
 const origin=process.env.TRUCO_TEST_URL||'http://localhost:3000';
 test('admin, uploads privados, snapshots, tentos manuais, animação pública e encerramento unânime',async({browser})=>{
@@ -7,7 +7,8 @@ test('admin, uploads privados, snapshots, tentos manuais, animação pública e 
   const secret=readFileSync('.data/admin-access.txt','utf8'),username=secret.match(/Usuário: (.+)/)![1],password=secret.match(/Senha: (.+)/)![1];
   const contexts:BrowserContext[]=[];let original:any;
   try{
-    for(let i=0;i<6;i++)contexts.push(await browser.newContext());
+    // The admin login limit is per address; use a documentation-range address so the password test's logins do not count here.
+    for(let i=0;i<6;i++)contexts.push(await browser.newContext(i===0?{extraHTTPHeaders:{'x-real-ip':'198.51.100.7'}}:{}));
     const admin=contexts[0],anon=contexts[5];
     expect((await anon.request.get(origin+'/api/admin/config')).status()).toBe(401);
     const page=await admin.newPage();await page.goto(origin+'/admin');await page.getByLabel('Usuário',{exact:true}).fill(username);await page.getByLabel('Senha',{exact:true}).fill(password);await page.getByRole('button',{name:'Entrar no painel'}).click();
@@ -36,7 +37,10 @@ test('admin, uploads privados, snapshots, tentos manuais, animação pública e 
     await expect.poll(async()=>roomPage.locator('.your-hand .card-photo').count()).toBe(3);
     expect((await contexts[5].request.get(endpoint+'/assets/'+id)).ok()).toBe(true);
     const outsider=await browser.newContext();try{expect((await outsider.request.get(endpoint+'/assets/'+id)).status()).toBe(403);}finally{await outsider.close();}
-    await roomPage.getByRole('button',{name:'Puxar tentos',exact:true}).click();await roomPage.getByLabel('Quantos tentos').selectOption('3');await roomPage.getByRole('button',{name:'Puxar 3',exact:true}).click();
+    // Taking points is only allowed in the payout window after a hand; open one directly in the local store.
+    const roomFile=`.data/rooms/${code}.json`,stored=JSON.parse(readFileSync(roomFile,'utf8'));
+    Object.assign(stored.document.state,{pullUntil:Date.now()+30000,pullLimit:3,pullUsed:[0,0],revision:stored.document.state.revision+1});stored.version++;writeFileSync(roomFile,JSON.stringify(stored));
+    await roomPage.getByRole('button',{name:/^Tentos/}).click();await roomPage.getByLabel('Quantos tentos').selectOption('3');await roomPage.getByRole('button',{name:'Puxar 3',exact:true}).click();
     await expect(roomPage.getByLabel('Quantos tentos')).toBeHidden();
     await expect(roomPage.locator('.pull-announcement').filter({hasText:'Pessoa 1 puxou 3 tentos'})).toBeVisible();await expect(otherPage.locator('.pull-announcement').filter({hasText:'Pessoa 1 puxou 3 tentos'})).toBeVisible();
     expect((await view(1)).scores).toEqual([3,0]);
@@ -59,7 +63,11 @@ test('criação pelo site escolhe personalizado manual e bots confirmam encerram
   await page.goto(origin);await page.getByLabel('Como te chamam?').fill('Amigos da casa');
   await page.getByRole('button',{name:/Personalizado/}).click();await page.getByRole('button',{name:/Tentos manuais/}).click();
   await page.getByRole('button',{name:'Treinar contra bot',exact:true}).click();await page.getByRole('button',{name:'Estou pronto',exact:true}).click();
-  await expect(page.locator('.custom-mode-badge')).toContainText('Tentos manuais');await page.getByRole('button',{name:'Puxar tentos',exact:true}).click();
+  await expect(page.locator('.custom-mode-badge')).toContainText('Tentos manuais');
+  // Taking points is only allowed in the payout window after a hand; open one directly in the local store.
+  const file=`.data/rooms/${page.url().split('/').pop()}.json`,stored=JSON.parse(readFileSync(file,'utf8'));
+  Object.assign(stored.document.state,{pullUntil:Date.now()+30000,pullLimit:11,pullUsed:[0,0],revision:stored.document.state.revision+1});stored.version++;writeFileSync(file,JSON.stringify(stored));
+  await page.getByRole('button',{name:/^Tentos/}).click();
   await page.getByLabel('Quantos tentos').selectOption('11');await page.getByRole('button',{name:'Puxar 11',exact:true}).click();
   await expect(page.getByRole('region',{name:'Resultado da partida'})).toHaveCount(0);
   await page.getByRole('button',{name:/Votar para encerrar/}).click();

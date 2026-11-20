@@ -1,0 +1,299 @@
+[
+  {
+    "scope": "production-public",
+    "path": "/",
+    "width": 1440,
+    "errors": [],
+    "overflow": false,
+    "documentWidth": 1440,
+    "unlabelledButtons": 0
+  },
+  {
+    "scope": "production-public",
+    "path": "/",
+    "width": 390,
+    "errors": [],
+    "overflow": false,
+    "documentWidth": 390,
+    "unlabelledButtons": 0
+  },
+  {
+    "scope": "production-public",
+    "path": "/",
+    "width": 320,
+    "errors": [],
+    "overflow": false,
+    "documentWidth": 320,
+    "unlabelledButtons": 0
+  },
+  {
+    "scope": "production-public",
+    "path": "/como-jogar",
+    "width": 1440,
+    "errors": [],
+    "overflow": false,
+    "documentWidth": 1440,
+    "unlabelledButtons": 0
+  },
+  {
+    "scope": "production-public",
+    "path": "/como-jogar",
+    "width": 390,
+    "errors": [],
+    "overflow": false,
+    "documentWidth": 390,
+    "unlabelledButtons": 0
+  },
+  {
+    "scope": "production-public",
+    "path": "/como-jogar",
+    "width": 320,
+    "errors": [],
+    "overflow": false,
+    "documentWidth": 320,
+    "unlabelledButtons": 0
+  },
+  {
+    "scope": "production-public",
+    "path": "/sinuca",
+    "width": 1440,
+    "errors": [],
+    "overflow": false,
+    "documentWidth": 1440,
+    "unlabelledButtons": 0
+  },
+  {
+    "scope": "production-public",
+    "path": "/sinuca",
+    "width": 390,
+    "errors": [],
+    "overflow": false,
+    "documentWidth": 390,
+    "unlabelledButtons": 0
+  },
+  {
+    "scope": "production-public",
+    "path": "/sinuca",
+    "width": 320,
+    "errors": [],
+    "overflow": true,
+    "documentWidth": 376,
+    "unlabelledButtons": 0
+  },
+  {
+    "scope": "production-public",
+    "path": "/domino",
+    "width": 1440,
+    "errors": [],
+    "overflow": false,
+    "documentWidth": 1440,
+    "unlabelledButtons": 0
+  },
+  {
+    "scope": "production-public",
+    "path": "/domino",
+    "width": 390,
+    "errors": [],
+    "overflow": false,
+    "documentWidth": 390,
+    "unlabelledButtons": 0
+  },
+  {
+    "scope": "production-public",
+    "path": "/domino",
+    "width": 320,
+    "errors": [],
+    "overflow": false,
+    "documentWidth": 320,
+    "unlabelledButtons": 0
+  },
+  {
+    "scope": "production-public",
+    "path": "/admin",
+    "width": 1440,
+    "errors": [],
+    "overflow": false,
+    "documentWidth": 1440,
+    "unlabelledButtons": 0
+  },
+  {
+    "scope": "production-public",
+    "path": "/admin",
+    "width": 390,
+    "errors": [],
+    "overflow": false,
+    "documentWidth": 390,
+    "unlabelledButtons": 0
+  },
+  {
+    "scope": "production-public",
+    "path": "/admin",
+    "width": 320,
+    "errors": [],
+    "overflow": false,
+    "documentWidth": 320,
+    "unlabelledButtons": 0
+  },
+  {
+    "scope": "local",
+    "game": "truco",
+    "phase": "lobby",
+    "width": 1440,
+    "overflow": false,
+    "documentWidth": 1440,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "truco",
+    "phase": "lobby",
+    "width": 390,
+    "overflow": false,
+    "documentWidth": 390,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "truco",
+    "phase": "lobby",
+    "width": 320,
+    "overflow": false,
+    "documentWidth": 320,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "truco",
+    "phase": "playing",
+    "width": 1440,
+    "overflow": false,
+    "documentWidth": 1440,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "truco",
+    "phase": "playing",
+    "width": 390,
+    "overflow": false,
+    "documentWidth": 390,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "truco",
+    "phase": "playing",
+    "width": 320,
+    "overflow": false,
+    "documentWidth": 320,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "domino",
+    "phase": "lobby",
+    "width": 1440,
+    "overflow": false,
+    "documentWidth": 1440,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "domino",
+    "phase": "lobby",
+    "width": 390,
+    "overflow": false,
+    "documentWidth": 390,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "domino",
+    "phase": "lobby",
+    "width": 320,
+    "overflow": false,
+    "documentWidth": 320,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "domino",
+    "phase": "playing",
+    "width": 1440,
+    "overflow": false,
+    "documentWidth": 1440,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "domino",
+    "phase": "playing",
+    "width": 390,
+    "overflow": false,
+    "documentWidth": 390,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "domino",
+    "phase": "playing",
+    "width": 320,
+    "overflow": false,
+    "documentWidth": 320,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "sinuca",
+    "phase": "lobby",
+    "width": 1440,
+    "overflow": false,
+    "documentWidth": 1440,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "sinuca",
+    "phase": "lobby",
+    "width": 390,
+    "overflow": false,
+    "documentWidth": 390,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "sinuca",
+    "phase": "lobby",
+    "width": 320,
+    "overflow": false,
+    "documentWidth": 320,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "sinuca",
+    "phase": "playing",
+    "width": 1440,
+    "overflow": false,
+    "documentWidth": 1440,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "sinuca",
+    "phase": "playing",
+    "width": 390,
+    "overflow": false,
+    "documentWidth": 390,
+    "offscreen": []
+  },
+  {
+    "scope": "local",
+    "game": "sinuca",
+    "phase": "playing",
+    "width": 320,
+    "overflow": false,
+    "documentWidth": 320,
+    "offscreen": []
+  }
+]

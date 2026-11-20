@@ -1,5 +1,5 @@
 import { randomInt, randomUUID } from 'node:crypto';
-import { BIDS, cardStrength, handWinner, makeDeck, scoreAfterWin } from './truco-rules';
+import { BIDS, SCORE_STEPS, cardStrength, handWinner, makeDeck, scoreAfterWin } from './truco-rules';
 import type { CustomConfig } from './custom-mode';
 export { cardStrength, makeDeck } from './truco-rules';
 import { ELEVEN_NOTICE_MS } from './presentation';
@@ -18,7 +18,7 @@ export type Room = {
   removedIds?: string[];
   runRequest?: { id: string; team: number; by: string; resumeSeat: number } | null;
   custom?: { config: CustomConfig; scoreMode: 'normal' | 'manual' };
-  cameras?: {playerId:string;session:string;at:number}[];
+  cameras?: {playerId:string;session:string;at:number;live?:boolean}[];
   cameraSignals?: {id:string;from:string;to:string;session:string;targetSession:string;sdp:{type:string;sdp:string};at:number}[];
   pullUntil?: number;
   pullLimit?: number;
@@ -184,6 +184,9 @@ export function applyCommand(room: Room, playerId: string, command: any, now: nu
     r.spectators = (r.spectators ?? []).filter(v => v.id !== target);
     delete r.hands[target];
     if (command.type === 'kick') r.removedIds = [...(r.removedIds ?? []), target].slice(-128);
+    // Votes belong to seated players only; a departed vote must never start or end a match.
+    r.rematchVotes = r.rematchVotes.filter(id => id !== target);
+    r.finishVotes = r.finishVotes?.filter(id => id !== target);
     if (r.hostId === target) r.hostId = r.players.find(v => !v.isBot)?.id ?? r.spectators[0]?.id;
     r.revision++; return r;
   }
@@ -205,7 +208,7 @@ export function applyCommand(room: Room, playerId: string, command: any, now: nu
     if(command.type==='camera') {
       if(typeof command.session!=='string'||command.session.length>64)fail('Sessão de câmera inválida.');
       r.cameras=(r.cameras??[]).filter(c=>now-c.at<25000&&(c.playerId!==playerId||(!command.enabled&&c.session!==command.session)));
-      if(command.enabled)r.cameras.push({playerId,session:command.session,at:now});
+      if(command.enabled)r.cameras.push({playerId,session:command.session,at:now,live:command.live!==false});
       r.socialRevision=(r.socialRevision??0)+1;return r;
     }
     if(command.type==='camera-signal') {
@@ -220,6 +223,8 @@ export function applyCommand(room: Room, playerId: string, command: any, now: nu
         if(!Number.isInteger(amount)||amount===0||Math.abs(amount)>11||before+amount<0||before+amount>99)fail('Puxe ou devolva de 1 a 11 tentos. O placar vai de 0 a 99.');
         if(r.pullEvents?.some(e=>e.playerId===p!.id&&now-e.at<1000))fail('Aguarde a mão terminar de puxar antes de repetir.');
         if(amount>0 && (!r.pullUntil || now>=r.pullUntil)) fail('Só pode puxar tentos nos 5 segundos após a rodada.');
+        // A delayed request from an earlier hand must not spend the current payout window.
+        if(amount>0 && command.pullWindow!==undefined && command.pullWindow!==r.pullUntil) fail('Essa rodada já terminou. Confira o placar e tente de novo.');
         if(amount>0){
           const remaining=Math.max(0,(r.pullLimit??0)-(r.pullUsed?.[ownTeam]??0));
           if(amount>remaining)fail(`Nesta rodada sua equipe pode puxar no máximo mais ${remaining} tento(s).`);
@@ -285,7 +290,8 @@ export function applyCommand(room: Room, playerId: string, command: any, now: nu
     } else if (command.type === 'rematch') {
       if (r.status !== 'finished' && r.status !== 'cancelled') fail('A partida ainda não terminou.');
       if (!r.rematchVotes.includes(playerId)) r.rematchVotes.push(playerId);
-      if (r.rematchVotes.length === size(r)) {
+      r.rematchVotes = r.rematchVotes.filter(id => r.players.some(v => v.id === id));
+      if (r.players.length === size(r) && r.players.every(v => r.rematchVotes.includes(v.id))) {
         r.status = 'playing'; r.scores = [0, 0]; r.winner = null; r.handNumber = 0; r.history = [];
         r.rematchVotes = []; r.players.forEach(v => v.lastSeen = now); startHand(r, now, true);
         r.finishVotes=[];r.pullEvents=[];r.pullUntil=undefined;r.pullLimit=0;r.pullUsed=[0,0];r.matchId=randomUUID();
@@ -377,13 +383,17 @@ export function reconcile(room: Room, now: number): Room {
   if(r.status==='playing'&&r.custom?.scoreMode==='manual'&&r.scores.some(s=>s>11)){
     r.status='finished';r.winner=r.scores[0]>=r.scores[1]?0:1;r.deadline=null;r.pending=null;r.transition=null;r.runRequest=null;r.botAction=null;r.revision++;
   }
-  const steps = [0, 3, 5, 7, 9, 11];
-  const scores = r.scores.map(value => steps.findLast(score => score <= value) ?? 0);
+  const scores = r.scores.map(value => SCORE_STEPS.findLast(score => score <= value) ?? 0);
   if (r.custom?.scoreMode !== 'manual' && scores.some((score, i) => score !== r.scores[i])) { r.scores = scores; r.revision++; }
   // Upgrade ongoing rooms created before mandatory 11–11 play was introduced.
   if (r.status === 'playing' && r.custom?.scoreMode !== 'manual' && r.scores.every(score => score === 11) && !r.eleven?.forced) {
     r.eleven = { teams: [0, 1], accepted: [0, 1], forced: true }; r.stake = 5; r.pending = null;
     log(r, '11 a 11: os dois lados são obrigados a jogar por 5 tentos, sem correr.'); r.revision++;
+  }
+  // Defensive: a match can never continue with an empty seat (old rooms or future bugs).
+  if (r.status === 'playing' && r.players.length < size(r)) {
+    r.status = 'cancelled'; r.winner = null; r.deadline = null; r.pending = null; r.transition = null; r.runRequest = null; r.botAction = null;
+    log(r, 'Partida cancelada: falta jogador na mesa.'); r.revision++;
   }
   while (r.status === 'playing') {
     const absentAt = r.custom?.scoreMode === 'manual' ? Infinity : Math.min(...r.players.filter(p => !p.isBot).map(p => p.lastSeen + ABSENCE));

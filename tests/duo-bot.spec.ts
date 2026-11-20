@@ -21,7 +21,7 @@ test('treino 2x2 com três bots, sinais e confirmação do parceiro', async ({ p
   await expect(page.getByRole('heading', { name: 'Chat da sala', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Sinalizar Zap', exact: true }).click();
   await expect.poll(async () => (await view()).signals.some((s: any) => s.kind === 'ack' && s.playerId !== started.playerId)).toBe(true);
-  await expect(page.getByLabel('Bot parceiro sinalizou 👍')).toContainText('👍');
+  await expect(page.getByLabel('Bot parceiro sinalizou Entendi')).toContainText('👍');
   const state = await view();
   const partner = state.players.find((p: any) => p.name === 'Bot parceiro');
   expect(state.signals.some((s: any) => s.playerId === partner.id && s.kind === 'ack')).toBeTruthy();

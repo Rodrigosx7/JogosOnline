@@ -1,0 +1,468 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Rodrigo Justo\\Desktop\\WebDraft\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "tests/e2e.spec.ts",
+      "tests/interaction.spec.ts",
+      "tests/social.spec.ts",
+      "tests/tutorial.spec.ts",
+      "tests/domino.spec.ts",
+      "--grep-invert",
+      "partida completa|complete a domino match",
+      "--timeout=30000",
+      "--reporter=json",
+      "--output=test-results/audit-prod"
+    ],
+    "configFile": "C:\\Users\\Rodrigo Justo\\Desktop\\WebDraft\\playwright.config.ts",
+    "rootDir": "C:/Users/Rodrigo Justo/Desktop/WebDraft/tests",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Rodrigo Justo/Desktop/WebDraft/test-results/audit-prod",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "C:/Users/Rodrigo Justo/Desktop/WebDraft/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "C:\\Users\\Rodrigo Justo\\Desktop\\WebDraft\\test-results\\audit-prod",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "",
+        "testDir": "C:\\Users\\Rodrigo Justo\\Desktop\\WebDraft\\tests",
+        "snapshotDir": "C:\\Users\\Rodrigo Justo\\Desktop\\WebDraft\\tests",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "headless": true
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.65.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "domino.spec.ts",
+      "file": "domino.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "domino entry, practice bots and mobile layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1280,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T13:37:46.804Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "50cc1352550e813e293b-891aee2c2fedfa63c5fa",
+          "file": "domino.spec.ts",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "e2e.spec.ts",
+      "file": "e2e.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "início responsivo",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1694,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T13:37:48.215Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b1c7859d981cc20c96be-0ed04d40b1f7d8a0d3c4",
+          "file": "e2e.spec.ts",
+          "line": 28,
+          "column": 1
+        },
+        {
+          "title": "API: idempotência, revisão e cookie adulterado",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 92,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T13:37:49.919Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b1c7859d981cc20c96be-3a98bc8f3d217000a40a",
+          "file": "e2e.spec.ts",
+          "line": 29,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "interaction.spec.ts",
+      "file": "interaction.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "cliques reais 1x1: distribuição, truco e mesa compartilhada",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 15525,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T13:37:50.031Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "658d4d77d9fd28df6a81-9a48ab113d2835d9b6bc",
+          "file": "interaction.spec.ts",
+          "line": 6,
+          "column": 3
+        },
+        {
+          "title": "cliques reais 2x2: distribuição, truco e mesa compartilhada",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 18007,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T13:38:05.566Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "658d4d77d9fd28df6a81-13ac2ebfdb43a41c5bc4",
+          "file": "interaction.spec.ts",
+          "line": 6,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "social.spec.ts",
+      "file": "social.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "chat da sala e sinais visíveis para todos em sessões independentes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7711,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T13:38:23.606Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3bd26b923e159664f17e-5c88037d485bdd56b69d",
+          "file": "social.spec.ts",
+          "line": 3,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "tutorial.spec.ts",
+      "file": "tutorial.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "tutorial: hierarquia, encobertas, tentos, empates, exemplos e exercícios no celular",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "timedOut",
+                  "duration": 30030,
+                  "error": {
+                    "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                    "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                  },
+                  "errors": [
+                    {
+                      "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                    },
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Rodrigo Justo\\Desktop\\WebDraft\\tests\\tutorial.spec.ts",
+                        "column": 69,
+                        "line": 6
+                      },
+                      "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'Aprender a jogar', exact: true })\u001b[22m\n\n\n  4 | test('tutorial: hierarquia, encobertas, tentos, empates, exemplos e exercícios no celular', async ({page})=>{\n  5 |   await page.setViewportSize({width:390,height:844});await page.goto(origin);\n> 6 |   await page.getByRole('link',{name:'Aprender a jogar',exact:true}).click();\n    |                                                                     ^\n  7 |   const guide=page.locator('.truco-tutorial');const chapter=guide.getByLabel('Escolha um capítulo');\n  8 |   await expect(guide.getByRole('heading',{name:'Primeiros passos',exact:true})).toBeVisible();\n  9 |   await chapter.selectOption('3');\n    at C:\\Users\\Rodrigo Justo\\Desktop\\WebDraft\\tests\\tutorial.spec.ts:6:69"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T13:38:31.352Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Rodrigo Justo\\Desktop\\WebDraft\\test-results\\audit-prod\\tutorial-tutorial-hierarqu-d8386-los-e-exercícios-no-celular\\error-context.md"
+                    }
+                  ]
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "01f512424d35f19bba88-ca2939b62e64d456d64b",
+          "file": "tutorial.spec.ts",
+          "line": 4,
+          "column": 1
+        },
+        {
+          "title": "consultar tutorial na sala não envia jogadas e fecha com Escape devolvendo foco",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 5687,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeFocused\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: 'Aprender a jogar', exact: true })\nExpected: focused\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeFocused\" getByRole('button', { name: 'Aprender a jogar', exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: 'Aprender a jogar', exact: true })\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeFocused\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: 'Aprender a jogar', exact: true })\nExpected: focused\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeFocused\" getByRole('button', { name: 'Aprender a jogar', exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: 'Aprender a jogar', exact: true })\u001b[22m\n\n    at C:\\Users\\Rodrigo Justo\\Desktop\\WebDraft\\tests\\tutorial.spec.ts:56:101",
+                    "location": {
+                      "file": "C:\\Users\\Rodrigo Justo\\Desktop\\WebDraft\\tests\\tutorial.spec.ts",
+                      "column": 101,
+                      "line": 56
+                    },
+                    "snippet": " \u001b[90m 54 |\u001b[39m     \u001b[36mawait\u001b[39m dialog\u001b[33m.\u001b[39mgetByLabel(\u001b[32m'Escolher carta 1'\u001b[39m)\u001b[33m.\u001b[39mselectOption(\u001b[32m'4-clubs'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 55 |\u001b[39m     \u001b[36mawait\u001b[39m expect(dialog\u001b[33m.\u001b[39mgetByRole(\u001b[32m'status'\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m'4♣ · paus venceu'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 56 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mkeyboard\u001b[33m.\u001b[39mpress(\u001b[32m'Escape'\u001b[39m)\u001b[33m;\u001b[39m\u001b[36mawait\u001b[39m expect(dialog)\u001b[33m.\u001b[39mnot\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\u001b[36mawait\u001b[39m expect(opener)\u001b[33m.\u001b[39mtoBeFocused()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                                                                     \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 57 |\u001b[39m     \u001b[36mconst\u001b[39m after\u001b[33m=\u001b[39m\u001b[36mawait\u001b[39m(\u001b[36mawait\u001b[39m context\u001b[33m.\u001b[39mrequest\u001b[33m.\u001b[39mget(endpoint))\u001b[33m.\u001b[39mjson()\u001b[33m;\u001b[39mexpect(after\u001b[33m.\u001b[39mrevision)\u001b[33m.\u001b[39mtoBe(before\u001b[33m.\u001b[39mrevision)\u001b[33m;\u001b[39mexpect(after\u001b[33m.\u001b[39mhand)\u001b[33m.\u001b[39mtoEqual(before\u001b[33m.\u001b[39mhand)\u001b[33m;\u001b[39mexpect(commands)\u001b[33m.\u001b[39mtoBe(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 58 |\u001b[39m   }\u001b[36mfinally\u001b[39m{\u001b[36mawait\u001b[39m context\u001b[33m.\u001b[39mclose()\u001b[33m;\u001b[39m}\n \u001b[90m 59 |\u001b[39m })\u001b[33m;\u001b[39m"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Rodrigo Justo\\Desktop\\WebDraft\\tests\\tutorial.spec.ts",
+                        "column": 101,
+                        "line": 56
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeFocused\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: 'Aprender a jogar', exact: true })\nExpected: focused\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeFocused\" getByRole('button', { name: 'Aprender a jogar', exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: 'Aprender a jogar', exact: true })\u001b[22m\n\n\n  54 |     await dialog.getByLabel('Escolher carta 1').selectOption('4-clubs');\n  55 |     await expect(dialog.getByRole('status')).toContainText('4♣ · paus venceu');\n> 56 |     await page.keyboard.press('Escape');await expect(dialog).not.toBeVisible();await expect(opener).toBeFocused();\n     |                                                                                                     ^\n  57 |     const after=await(await context.request.get(endpoint)).json();expect(after.revision).toBe(before.revision);expect(after.hand).toEqual(before.hand);expect(commands).toBe(0);\n  58 |   }finally{await context.close();}\n  59 | });\n    at C:\\Users\\Rodrigo Justo\\Desktop\\WebDraft\\tests\\tutorial.spec.ts:56:101"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T13:39:01.842Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Rodrigo Justo\\Desktop\\WebDraft\\test-results\\audit-prod\\tutorial-consultar-tutoria-49c34--com-Escape-devolvendo-foco\\error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Rodrigo Justo\\Desktop\\WebDraft\\tests\\tutorial.spec.ts",
+                    "column": 101,
+                    "line": 56
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "01f512424d35f19bba88-cf30160f998a06af3436",
+          "file": "tutorial.spec.ts",
+          "line": 43,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-16T13:37:46.283Z",
+    "duration": 81439.776,
+    "expected": 6,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}

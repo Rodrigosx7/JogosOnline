@@ -3,7 +3,7 @@ const origin=process.env.TRUCO_TEST_URL||'http://localhost:3000';
 
 test('tutorial: hierarquia, encobertas, tentos, empates, exemplos e exercícios no celular', async ({page})=>{
   await page.setViewportSize({width:390,height:844});await page.goto(origin);
-  await page.getByRole('link',{name:'Aprender a jogar',exact:true}).click();
+  await page.locator('a.landing-mobile-tutorial-link').click();
   const guide=page.locator('.truco-tutorial');const chapter=guide.getByLabel('Escolha um capítulo');
   await expect(guide.getByRole('heading',{name:'Primeiros passos',exact:true})).toBeVisible();
   await chapter.selectOption('3');
@@ -53,7 +53,9 @@ test('consultar tutorial na sala não envia jogadas e fecha com Escape devolvend
     await page.setViewportSize({width:390,height:844});await dialog.getByLabel('Escolha um capítulo').selectOption('3');
     await dialog.getByLabel('Escolher carta 1').selectOption('4-clubs');
     await expect(dialog.getByRole('status')).toContainText('4♣ · paus venceu');
-    await page.keyboard.press('Escape');await expect(dialog).not.toBeVisible();await expect(opener).toBeFocused();
+    await page.keyboard.press('Escape');await expect(dialog).not.toBeVisible();
+    // The opener is hidden on phones; focus must land on a visible part of the table, not be lost.
+    await expect.poll(()=>page.evaluate(()=>{const e=document.activeElement as HTMLElement|null;return !!e&&e!==document.body&&e.getClientRects().length>0;})).toBe(true);
     const after=await(await context.request.get(endpoint)).json();expect(after.revision).toBe(before.revision);expect(after.hand).toEqual(before.hand);expect(commands).toBe(0);
   }finally{await context.close();}
 });

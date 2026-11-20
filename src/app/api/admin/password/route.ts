@@ -1,8 +1,8 @@
 import {requireAdmin,changeAdminPassword,setAdminSession} from '@/lib/server/admin-auth';
-import {body,failure,HttpError,json,rateLimit,sameOrigin} from '@/lib/server/http';
+import {body,failure,HttpError,json,clientIp,rateLimit,sharedRateLimit,sameOrigin} from '@/lib/server/http';
 export const runtime='nodejs';
 export async function PUT(request:Request){try{
-  sameOrigin(request);await requireAdmin();rateLimit(`admin-password:${request.headers.get('x-forwarded-for')?.split(',')[0]??'unknown'}`,5);
+  sameOrigin(request);await requireAdmin();await sharedRateLimit(`admin-password:${clientIp(request.headers)}`,5);
   const input=await body(request);
   if(typeof input.currentPassword!=='string'||input.currentPassword.length>256||typeof input.newPassword!=='string'||typeof input.confirmPassword!=='string')throw new HttpError(400,'Preencha a senha atual, a nova senha e a confirmação.');
   if(input.newPassword!==input.confirmPassword)throw new HttpError(400,'A confirmação da nova senha não confere.');

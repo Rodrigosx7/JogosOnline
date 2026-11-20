@@ -4,7 +4,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { FileRoomStore } from './storage';
-import { accessRoom, newRoom, openRooms } from './rooms';
+import { accessRoom, newRoom, openRooms, readRoom } from './rooms';
 import { applyCommand, createRoom } from '../game';
 
 async function fixture(action: (store: FileRoomStore) => Promise<void>) {
@@ -176,7 +176,7 @@ test('manual pulls and end votes merge concurrent revisions and reject commands 
   let state=(await accessRoom(code,'a',undefined,store)).view;
   const stored=await store.get<any>(code);stored!.document.state.pullUntil=Date.now()+5000;stored!.document.state.pullLimit=3;await store.compareAndSwap(code,stored!.version,stored!.document);
   const matchId=state.matchId,revision=state.revision;
-  const pulled=await Promise.all(['a','b'].map((id,i)=>accessRoom(code,id,{command:{type:'pull',amount:3,matchId},revision,requestId:`concurrent-pull-${i}`},store)));
+  const pulled=await Promise.all(['a','b'].map((id,i)=>accessRoom(code,id,{command:{type:'pull',amount:3,matchId,pullWindow:stored!.document.state.pullUntil},revision,requestId:`concurrent-pull-${i}`},store)));
   assert.deepEqual(pulled.map(x=>x.status),[200,200]);assert.deepEqual((await accessRoom(code,'a',undefined,store)).view.scores,[3,3]);
   state=(await accessRoom(code,'a',undefined,store)).view;
   const ended=await Promise.all(['a','b'].map((id,i)=>accessRoom(code,id,{command:{type:'finish-vote',vote:true,matchId},revision:state.revision,requestId:`concurrent-end-${i}`},store)));
@@ -184,4 +184,28 @@ test('manual pulls and end votes merge concurrent revisions and reject commands 
   await send('a',{type:'rematch'});await send('b',{type:'rematch'});
   const next=(await accessRoom(code,'a',undefined,store)).view;assert.notEqual(next.matchId,matchId);
   const stale=await accessRoom(code,'a',{command:{type:'pull',amount:11,matchId},revision:next.revision,requestId:'prior-match-pull'},store);assert.equal(stale.status,409);assert.deepEqual(stale.view.scores,[0,0]);
+
+  // A01: a pull held back from an earlier payout window must not spend the current one.
+  const again=await store.get<any>(code);again!.document.state.pullUntil=Date.now()+5000;again!.document.state.pullLimit=3;again!.document.state.pullUsed=[0,0];await store.compareAndSwap(code,again!.version,again!.document);
+  const current=(await accessRoom(code,'a',undefined,store)).view;
+  const oldWindow=await accessRoom(code,'a',{command:{type:'pull',amount:3,matchId:next.matchId,pullWindow:again!.document.state.pullUntil-60_000},revision:current.revision,requestId:'old-window-pull'},store);
+  assert.equal(oldWindow.status,409);assert.deepEqual(oldWindow.view.scores,[0,0]);
+  const missing=await accessRoom(code,'a',{command:{type:'pull',amount:3,matchId:next.matchId},revision:current.revision,requestId:'no-window-pull'},store);
+  assert.equal(missing.status,409);
+  const ok=await accessRoom(code,'a',{command:{type:'pull',amount:3,matchId:next.matchId,pullWindow:again!.document.state.pullUntil},revision:current.revision,requestId:'current-window-pull'},store);
+  assert.equal(ok.status,200);assert.deepEqual(ok.view.scores,[3,0]);
+}));
+
+test('plain reads do not rewrite the room and unchanged polls get a short answer', () => fixture(async store => {
+  const { code } = await newRoom('a', { mode: '1x1', name: 'Ana' }, store);
+  const first = await accessRoom(code, 'a', undefined, store);
+  const version = (await store.get(code))!.version;
+  await readRoom(code, 'a', store);
+  const again = await accessRoom(code, 'a', undefined, store);
+  assert.equal((await store.get(code))!.version, version);
+  assert.equal(again.view.revision, first.view.revision);
+  const { viewKey } = await import('./rooms');
+  const short = await accessRoom(code, 'a', undefined, store, viewKey(again.view));
+  assert.equal(short.view.unchanged, true);
+  await assert.rejects(readRoom(code, 'stranger', store), /convite/);
 }));

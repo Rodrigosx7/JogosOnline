@@ -1,0 +1,22 @@
+[
+  {
+    "mode": "1x1",
+    "completed": true,
+    "steps": 58,
+    "scores": [
+      11,
+      5
+    ],
+    "rematch": true
+  },
+  {
+    "mode": "2x2",
+    "completed": true,
+    "steps": 91,
+    "scores": [
+      5,
+      11
+    ],
+    "rematch": true
+  }
+]

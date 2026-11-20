@@ -33,7 +33,7 @@ export async function newDominoRoom(id: string, input: Record<string, unknown>, 
   throw new HttpError(503, 'Não foi possível criar a mesa. Tente novamente.');
 }
 export async function openDominoRooms(store: RoomStore = roomStore(), now = Date.now()) {
-  const rooms = await store.listOpen() as unknown as Domino[];
+  const rooms = await store.listOpen('domino') as unknown as Domino[];
   return rooms.filter(r => r.game === 'domino' && r.status === 'waiting' && r.listed && r.players.length < 4 && r.players[0]?.lastSeen > now - 90000)
     .slice(0, 20).map(r => ({ code: r.code, host: r.players[0].name, players: r.players.length }));
 }

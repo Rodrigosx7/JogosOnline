@@ -9,7 +9,7 @@ export async function GET(request: Request, context: Context) {
     const playerId = await identity();
     rateLimit(`read:${playerId}`, 180);
     const { code } = await context.params;
-    const result = await accessRoom(code, playerId);
+    const result = await accessRoom(code, playerId, undefined, undefined, new URL(request.url).searchParams.get('known'));
     return json(result.view, result.status);
   } catch (error) { return failure(error); }
 }

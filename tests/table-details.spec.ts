@@ -82,7 +82,8 @@ for (const mode of ['1x1', '2x2'] as const) test(`mesa ${mode}: mão próxima, t
     if (mode === '2x2') {
       const signals = (await pages[asker].getByRole('group', { name: 'Sinais da mesa' }).boundingBox())!;
       expect(signals.y + signals.height).toBeLessThanOrEqual(844);
-      await expect(pages[asker].locator('.your-hand .hand-signals button')).toHaveCount(7);
+      // Seven quick signals plus the "Mais" button that opens the phrases.
+      await expect(pages[asker].locator('.your-hand .hand-signals button')).toHaveCount(8);
     }
     await pages[asker].screenshot({ path: `test-results/truco-beside-cards-${mode}.png`, fullPage: true });
     await pages[responder].screenshot({ path: `test-results/table-held-mobile-${mode}.png`, fullPage: true });

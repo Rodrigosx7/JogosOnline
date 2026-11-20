@@ -6,7 +6,7 @@ test('treino com bot: criar, jogar, recarregar e terminar partida', async ({ pag
   await page.getByLabel('Como te chamam?').fill('Treinador');
   await page.getByRole('button', { name: /Treinar contra bot/ }).click();
   await expect(page).toHaveURL(/\/room\/[A-Za-z0-9_-]+$/);
-  await expect(page.getByText('Bot da casa', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Bot da casa', { exact: true }).filter({ visible: true }).first()).toBeVisible();
   await page.getByRole('button', { name: 'Estou pronto', exact: true }).click();
   await expect(page.getByTestId('dealing-animation')).toBeVisible();
   await expect(page.getByTestId('dealing-animation')).toBeHidden({ timeout: 10000 });

@@ -6,7 +6,7 @@ import type { Room } from '../game';
 export interface Document<T> { state: T; requests: Record<string, string[]> }
 export interface Stored<T> { version: number; document: Document<T> }
 export interface RoomStore {
-  listOpen(): Promise<Room[]>;
+  listOpen(game?: 'truco' | 'domino' | 'pool'): Promise<Room[]>;
   get<T>(code: string): Promise<Stored<T> | null>;
   create<T>(code: string, document: Document<T>): Promise<boolean>;
   compareAndSwap<T>(code: string, version: number, document: Document<T>): Promise<boolean>;
@@ -23,12 +23,13 @@ export async function serialized<T>(key: string, action: () => Promise<T>): Prom
 // Development adapter: one Node process, persistent disk. Production uses Postgres CAS.
 export class FileRoomStore implements RoomStore {
   constructor(private directory = path.join(process.cwd(), '.data', 'rooms')) {}
-  async listOpen() {
+  async listOpen(game?: 'truco' | 'domino' | 'pool') {
     let files: string[];
     try { files = await readdir(this.directory); }
     catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []; throw error; }
     const rooms = await Promise.all(files.filter(file => /^[A-Za-z0-9_-]{18,64}\.json$/.test(file)).map(file => this.get<Room>(file.slice(0, -5))));
-    return rooms.flatMap(room => room?.document.state.listed && room.document.state.status === 'waiting' ? [room.document.state] : []);
+    const kind = (state: Room) => ('game' in state ? (state as { game?: string }).game : undefined) ?? 'truco';
+    return rooms.flatMap(room => room?.document.state.listed && room.document.state.status === 'waiting' && (!game || kind(room.document.state) === game) ? [room.document.state] : []);
   }
   private file(code: string) {
     if (!/^[A-Za-z0-9_-]{18,64}$/.test(code)) throw new Error('Invalid room code');
@@ -42,7 +43,15 @@ export class FileRoomStore implements RoomStore {
     await mkdir(this.directory, { recursive: true, mode: 0o700 });
     const target = this.file(code), temporary = `${target}.${randomUUID()}.tmp`;
     await writeFile(temporary, JSON.stringify(value), { mode: 0o600 });
-    await rename(temporary, target);
+    // Windows refuses to replace a file another request is reading at that instant: retry briefly.
+    for (let attempt = 0; ; attempt++) {
+      try { await rename(temporary, target); return; }
+      catch (error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if ((code !== 'EPERM' && code !== 'EBUSY' && code !== 'EACCES') || attempt >= 8) throw error;
+        await new Promise(resolve => setTimeout(resolve, 15 * (attempt + 1)));
+      }
+    }
   }
   async create<T>(code: string, document: Document<T>) {
     return serialized(`file:${this.directory}:${code}`, async () => {
@@ -63,9 +72,11 @@ export function cloudConfigured() {
   return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 class SupabaseRoomStore implements RoomStore {
-  async listOpen(): Promise<Room[]> {
-    const after = new Date(Date.now() - 90_000).toISOString();
-    const rows = await this.request(`game_rooms?select=document&document->state->>status=eq.waiting&document->state->>listed=eq.true&updated_at=gte.${encodeURIComponent(after)}&order=updated_at.desc&limit=40`);
+  async listOpen(game?: 'truco' | 'domino' | 'pool'): Promise<Room[]> {
+    const after = new Date(Date.now() - 120_000).toISOString();
+    // Truco rooms predate the `game` field, so they are the ones without it.
+    const kind = !game ? '' : game === 'truco' ? '&document->state->>game=is.null' : `&document->state->>game=eq.${game}`;
+    const rows = await this.request(`game_rooms?select=document&document->state->>status=eq.waiting&document->state->>listed=eq.true${kind}&updated_at=gte.${encodeURIComponent(after)}&order=updated_at.desc&limit=40`);
     return rows.map((row: { document: Document<Room> }) => row.document.state);
   }
   private async request(route: string, init?: RequestInit) {

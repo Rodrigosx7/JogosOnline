@@ -213,3 +213,11 @@ Deployment dpl_pkQZLSqG45QmnZCXXdAdSrQ36bW6. Lista de salas com vagas na página
 - Regras casuais próprias de Bola 8 documentadas em docs/sinuca.md; sem alteração das regras de Truco ou Dominó.
 - Validação: 88 testes de regras/física/servidor, tipagem/build, sete testes de navegador para sinuca/dominó/truco e conferência de salas abertas. Partida completa de bots finalizada em 21 tacadas.
 - Conferência publicada com duas sessões independentes: criação privada, entrada, prontidão, saída, reprodução idêntica com 107 quadros e posições finais iguais após a primeira tacada; persistência real no Supabase.
+
+## Operação (atualizado em 20/11/2026)
+
+- **Saúde:** `GET /api/health` responde `{ok:true, storage:'ok'}` ou HTTP 503 quando o armazenamento não responde. Use-o no monitor de disponibilidade (ex.: Vercel Monitoring, UptimeRobot) e depois de cada publicação.
+- **Rollback:** na Vercel, *Deployments* → publicação anterior → *Promote to Production*. Depois confira `/api/health`, abra uma sala de treino e jogue uma vaza. As migrações SQL deste projeto são aditivas (`add column if not exists`, `create or replace`), então o código anterior continua funcionando com o banco novo.
+- **Limites de acesso:** login administrativo, criação de identidade anônima e criação de salas usam `public.rate_limit_hit` (tabela `rate_limits`), compartilhado por todas as instâncias. Se o banco falhar, vale o limite por instância.
+- **Retenção:** `select public.purge_stale_rooms(14);` apaga salas sem atividade há 14 dias (com associações e revisões) e linhas vencidas de `rate_limits`. A exclusão é permanente. Para agendar, ative a extensão `pg_cron` e crie `select cron.schedule('purge-rooms', '0 4 * * *', $$select public.purge_stale_rooms(14)$$);` — só depois de decidir o prazo de retenção.
+- **Migrações:** aplicar em ordem pelo SQL Editor do Supabase. `202611200001_social_revision.sql` e `202611200002_rate_limits_and_retention.sql` são as mais recentes.
