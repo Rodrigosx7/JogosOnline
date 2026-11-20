@@ -2,6 +2,16 @@ import {test,expect,type BrowserContext} from '@playwright/test';
 import {readFileSync,writeFileSync,existsSync} from 'node:fs';
 import {makeDeck} from '../src/lib/truco-rules';
 const origin=process.env.TRUCO_TEST_URL||'http://localhost:3000';
+// The server may rewrite the room (bot moves) at the same moment; retry until it reports the window.
+async function openPayoutWindow(code:string,limit:number,read:()=>Promise<any>){
+  for(let attempt=0;attempt<10;attempt++){
+    const file=`.data/rooms/${code}.json`,stored=JSON.parse(readFileSync(file,'utf8'));
+    Object.assign(stored.document.state,{pullUntil:Date.now()+30000,pullLimit:limit,pullUsed:[0,0],revision:stored.document.state.revision+1});stored.version++;writeFileSync(file,JSON.stringify(stored));
+    await new Promise(resolve=>setTimeout(resolve,300));
+    if((await read()).pullRemaining===limit)return;
+  }
+  throw new Error('Não foi possível abrir a janela de tentos no teste.');
+}
 test('admin, uploads privados, snapshots, tentos manuais, animação pública e encerramento unânime',async({browser})=>{
   test.skip(!origin.includes('localhost:3002')||!existsSync('.data/admin-access.txt'),'Credenciais locais de teste necessárias.');
   const secret=readFileSync('.data/admin-access.txt','utf8'),username=secret.match(/Usuário: (.+)/)![1],password=secret.match(/Senha: (.+)/)![1];
@@ -38,8 +48,7 @@ test('admin, uploads privados, snapshots, tentos manuais, animação pública e 
     expect((await contexts[5].request.get(endpoint+'/assets/'+id)).ok()).toBe(true);
     const outsider=await browser.newContext();try{expect((await outsider.request.get(endpoint+'/assets/'+id)).status()).toBe(403);}finally{await outsider.close();}
     // Taking points is only allowed in the payout window after a hand; open one directly in the local store.
-    const roomFile=`.data/rooms/${code}.json`,stored=JSON.parse(readFileSync(roomFile,'utf8'));
-    Object.assign(stored.document.state,{pullUntil:Date.now()+30000,pullLimit:3,pullUsed:[0,0],revision:stored.document.state.revision+1});stored.version++;writeFileSync(roomFile,JSON.stringify(stored));
+    await openPayoutWindow(code,3,()=>view(1));
     await roomPage.getByRole('button',{name:/^Tentos/}).click();await roomPage.getByLabel('Quantos tentos').selectOption('3');await roomPage.getByRole('button',{name:'Puxar 3',exact:true}).click();
     await expect(roomPage.getByLabel('Quantos tentos')).toBeHidden();
     await expect(roomPage.locator('.pull-announcement').filter({hasText:'Pessoa 1 puxou 3 tentos'})).toBeVisible();await expect(otherPage.locator('.pull-announcement').filter({hasText:'Pessoa 1 puxou 3 tentos'})).toBeVisible();
@@ -65,8 +74,8 @@ test('criação pelo site escolhe personalizado manual e bots confirmam encerram
   await page.getByRole('button',{name:'Treinar contra bot',exact:true}).click();await page.getByRole('button',{name:'Estou pronto',exact:true}).click();
   await expect(page.locator('.custom-mode-badge')).toContainText('Tentos manuais');
   // Taking points is only allowed in the payout window after a hand; open one directly in the local store.
-  const file=`.data/rooms/${page.url().split('/').pop()}.json`,stored=JSON.parse(readFileSync(file,'utf8'));
-  Object.assign(stored.document.state,{pullUntil:Date.now()+30000,pullLimit:11,pullUsed:[0,0],revision:stored.document.state.revision+1});stored.version++;writeFileSync(file,JSON.stringify(stored));
+  const code=page.url().split('/').pop()!;
+  await openPayoutWindow(code,11,()=>page.request.get(`${origin}/api/rooms/${code}`).then(r=>r.json()));
   await page.getByRole('button',{name:/^Tentos/}).click();
   await page.getByLabel('Quantos tentos').selectOption('11');await page.getByRole('button',{name:'Puxar 11',exact:true}).click();
   await expect(page.getByRole('region',{name:'Resultado da partida'})).toHaveCount(0);
